@@ -1,0 +1,6 @@
+*.o
+chuck
+chuck.output
+chuck.tab.c
+chuck.tab.h
+chuck.yy.c
