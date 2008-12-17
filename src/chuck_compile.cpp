@@ -36,6 +36,7 @@
 #include "chuck_otf.h"
 
 #include "ugen_osc.h"
+#include "ugen_sfont.h"
 #include "ugen_xxx.h"
 #include "ugen_filter.h"
 #include "ugen_stk.h"
@@ -527,6 +528,8 @@ t_CKBOOL load_internal_modules( Chuck_Compiler * compiler )
     type_engine_load_context( env, context );
 
     // load
+    EM_log( CK_LOG_SEVERE, "module sfont..." );
+    load_module( env, sfont_query, "sfont", "global" );
     EM_log( CK_LOG_SEVERE, "module osc..." );
     load_module( env, osc_query, "osc", "global" );
     EM_log( CK_LOG_SEVERE, "module xxx..." );
