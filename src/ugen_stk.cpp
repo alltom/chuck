@@ -17311,35 +17311,44 @@ void WvOut :: writeData( unsigned long frames )
 {
   if ( dataType == STK_SINT8 ) {
     if ( fileType == WVOUT_WAV ) { // 8-bit WAV data is unsigned!
-      unsigned char sample;
       for ( unsigned long k=0; k<frames*channels; k++ ) {
-        sample = (unsigned char) (data[k] * 127.0 + 128.0);
+        float float_sample = data[k] * 127.0 + 128.0;
+        if(float_sample < 0) float_sample = 0;
+        if(float_sample > 255) float_sample = 255;
+        unsigned char sample = (unsigned char) float_sample;
+        
         if ( fwrite(&sample, 1, 1, fd) != 1 ) goto error;
       }
     }
     else {
-      signed char sample;
       for ( unsigned long k=0; k<frames*channels; k++ ) {
-        sample = (signed char) (data[k] * 127.0 + (data[k] > 0 ? 0.5 : -0.5) );
-        //sample = ((signed char) (( data[k] + 1.0 ) * 127.5 + 0.5)) - 128;
+        float float_sample = data[k] * 127.0;
+        if(float_sample < -128) float_sample = -128;
+        if(float_sample > 127) float_sample = 127;
+        signed char sample = (signed char) float_sample;
+        
         if ( fwrite(&sample, 1, 1, fd) != 1 ) goto error;
       }
     }
   }
   else if ( dataType == STK_SINT16 ) {
-    SINT16 sample;
     for ( unsigned long k=0; k<frames*channels; k++ ) {
-      sample = (SINT16) (data[k] * 32767.0 + (data[k] > 0 ? 0.5 : -0.5) );
-      //sample = ((SINT16) (( data[k] + 1.0 ) * 32767.5 + 0.5)) - 32768;
+      float float_sample = data[k] * 32767.0;
+      if(float_sample < -32767) float_sample = -32767;
+      if(float_sample > 32767) float_sample = 32767;
+      SINT16 sample = (SINT16) float_sample;
+      
       if ( byteswap ) swap16( (unsigned char *)&sample );
       if ( fwrite(&sample, 2, 1, fd) != 1 ) goto error;
     }
   }
   else if ( dataType == STK_SINT32 ) {
-    SINT32 sample;
     for ( unsigned long k=0; k<frames*channels; k++ ) {
-      sample = (SINT32) (data[k] * 2147483647.0 + (data[k] > 0 ? 0.5 : -0.5) );
-      //sample = ((SINT32) (( data[k] + 1.0 ) * 2147483647.5 + 0.5)) - 2147483648;
+      float float_sample = data[k] * 32767.0;
+      if(float_sample < -2147483647) float_sample = -2147483647;
+      if(float_sample > 2147483647) float_sample = 2147483647;
+      SINT32 sample = (SINT32) float_sample;
+      
       if ( byteswap ) swap32( (unsigned char *)&sample );
       if ( fwrite(&sample, 4, 1, fd) != 1 ) goto error;
     }
@@ -17348,6 +17357,7 @@ void WvOut :: writeData( unsigned long frames )
     FLOAT32 sample;
     for ( unsigned long k=0; k<frames*channels; k++ ) {
       sample = (FLOAT32) (data[k]);
+      
       if ( byteswap ) swap32( (unsigned char *)&sample );
       if ( fwrite(&sample, 4, 1, fd) != 1 ) goto error;
     }
@@ -17356,6 +17366,7 @@ void WvOut :: writeData( unsigned long frames )
     FLOAT64 sample;
     for ( unsigned long k=0; k<frames*channels; k++ ) {
       sample = (FLOAT64) (data[k]);
+      
       if ( byteswap ) swap64( (unsigned char *)&sample );
       if ( fwrite(&sample, 8, 1, fd) != 1 ) goto error;
     }
