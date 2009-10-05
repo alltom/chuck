@@ -152,6 +152,8 @@ Chuck_VM::~Chuck_VM()
 }
 
 
+
+
 // dac tick
 //UGEN_TICK __dac_tick( Chuck_Object * SELF, SAMPLE in, SAMPLE * out ) 
 //{ *out = in; return TRUE; }
@@ -243,7 +245,7 @@ t_CKBOOL Chuck_VM::set_priority( t_CKINT priority, Chuck_VM * vm )
 t_CKBOOL Chuck_VM::initialize( t_CKBOOL enable_audio, t_CKBOOL halt, t_CKUINT srate,
                                t_CKUINT buffer_size, t_CKUINT num_buffers,
                                t_CKUINT dac, t_CKUINT adc, t_CKUINT dac_chan,
-                               t_CKUINT adc_chan, t_CKBOOL block )
+                               t_CKUINT adc_chan, t_CKBOOL block, t_CKUINT adaptive )
 {
     if( m_init )
     {
@@ -275,6 +277,7 @@ t_CKBOOL Chuck_VM::initialize( t_CKBOOL enable_audio, t_CKBOOL halt, t_CKUINT sr
     m_shreduler = new Chuck_VM_Shreduler;
     m_shreduler->bbq = m_bbq;
     m_shreduler->rt_audio = enable_audio;
+    m_shreduler->set_adaptive( adaptive > 0 ? adaptive : 0 );
 
     // log
     EM_log( CK_LOG_SYSTEM, "allocating messaging buffers..." );
@@ -298,6 +301,7 @@ t_CKBOOL Chuck_VM::initialize( t_CKBOOL enable_audio, t_CKBOOL halt, t_CKUINT sr
     {
         EM_log( CK_LOG_SYSTEM, "num buffers: %ld", num_buffers );
         EM_log( CK_LOG_SYSTEM, "devices adc: %ld dac: %d (default 0)", adc, dac );
+        EM_log( CK_LOG_SYSTEM, "adaptive block processing: %ld", adaptive > 1 ? adaptive : 0 ); 
     }
     EM_log( CK_LOG_SYSTEM, "channels in: %ld out: %ld", adc_chan, dac_chan );
     m_num_adc_channels = adc_chan;
@@ -383,6 +387,7 @@ t_CKBOOL Chuck_VM::initialize_synthesis( )
     m_bunghole->lock();
     initialize_object( m_bunghole, &t_ugen );
     m_bunghole->tick = NULL;
+    m_bunghole->alloc_v( m_shreduler->m_max_block_size );
     m_shreduler->m_dac = m_dac;
     m_shreduler->m_adc = m_adc;
     m_shreduler->m_bunghole = m_bunghole;
@@ -700,10 +705,12 @@ t_CKBOOL Chuck_VM::run( t_CKINT num_samps )
         if( !m_audio_started ) start_audio();
 
         // advance the shreduler
-        m_shreduler->advance();
-
-        // count
-        if( num_samps > 0 ) num_samps--;
+        if( !m_shreduler->m_adaptive )
+        {
+            m_shreduler->advance();
+            if( num_samps > 0 ) num_samps--;
+        }
+        else m_shreduler->advance_v( num_samps );
     }
 
     return FALSE;
@@ -1612,6 +1619,8 @@ Chuck_VM_Shreduler::Chuck_VM_Shreduler()
     m_bunghole = NULL;
     m_num_dac_channels = 0;
     m_num_adc_channels = 0;
+    
+    set_adaptive( 0 );
 }
 
 
@@ -1648,6 +1657,20 @@ t_CKBOOL Chuck_VM_Shreduler::initialize()
 t_CKBOOL Chuck_VM_Shreduler::shutdown()
 {
     return TRUE;
+}
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: set_adaptive()
+// desc: ...
+//-----------------------------------------------------------------------------
+void Chuck_VM_Shreduler::set_adaptive( t_CKUINT max_block_size )
+{
+    m_max_block_size = max_block_size > 1 ? max_block_size : 0;
+    m_adaptive = m_max_block_size > 1;
+    m_samps_until_next = -1;
 }
 
 
@@ -1765,8 +1788,95 @@ t_CKBOOL Chuck_VM_Shreduler::shredule( Chuck_VM_Shred * shred,
         }
     }
 
+    t_CKTIME diff = shred_list->wake_time - this->now_system;
+    if( diff < 0 ) diff = 0;
+    // if( diff < m_samps_until_next )
+    m_samps_until_next = diff;
+    
     return TRUE;
 }
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: advance_v()
+// desc: ...
+//-----------------------------------------------------------------------------
+void Chuck_VM_Shreduler::advance_v( t_CKINT & numLeft )
+{
+    t_CKINT i, j, numFrames;
+    SAMPLE frame[128], gain[128], sum;
+    BBQ * audio = this->bbq;
+    
+    // compute number of frames to compute; update
+    numFrames = ck_min( m_max_block_size, numLeft );
+    if( this->m_samps_until_next >= 0 )
+    {
+        numFrames = (t_CKINT)(ck_min( numFrames, this->m_samps_until_next ));
+        if( numFrames == 0 ) numFrames = 1;
+        this->m_samps_until_next -= numFrames;
+    }
+    numLeft -= numFrames;
+
+    // advance system 'now'
+    this->now_system += numFrames;
+
+    // tick in
+    if( rt_audio )
+    {
+        for( j = 0; j < m_num_adc_channels; j++ )
+        {
+            // update channel
+            m_adc->m_multi_chan[j]->m_time = this->now_system;
+            // cache gain
+            gain[j] = m_adc->m_multi_chan[j]->m_gain;
+        }
+        
+        // adaptive block
+        for( i = 0; i < numFrames; i++ )
+        {
+            // get input
+            audio->digi_in()->tick_in( frame, m_num_adc_channels );
+            // clear
+            sum = 0.0f;
+            // loop over channels
+            for( j = 0; j < m_num_adc_channels; j++ )
+            {
+                m_adc->m_multi_chan[j]->m_current_v[i] = frame[j] * gain[j] * m_adc->m_gain;
+                sum += m_adc->m_multi_chan[j]->m_current_v[i];
+            }
+            m_adc->m_current_v[i] = sum / m_num_adc_channels;
+        }
+        
+        for( j = 0; j < m_num_adc_channels; j++ )
+        {
+            // update last
+            m_adc->m_multi_chan[j]->m_last = m_adc->m_multi_chan[j]->m_current_v[numFrames-1];
+        }
+        // update last
+        m_adc->m_last = m_adc->m_current_v[numFrames-1];
+        // update time
+        m_adc->m_time = this->now_system;
+    }
+
+    // dac
+    m_dac->system_tick_v( this->now_system, numFrames );
+
+    // suck samples
+    m_bunghole->system_tick_v( this->now_system, numFrames );
+
+    // adaptive block
+    for( i = 0; i < numFrames; i++ )
+    {
+        for( j = 0; j < m_num_dac_channels; j++ )
+            frame[j] = m_dac->m_multi_chan[j]->m_current_v[i];
+        
+        // tick
+        audio->digi_out()->tick_out( frame, m_num_dac_channels );
+    }
+}
+
 
 
 
@@ -1837,6 +1947,7 @@ void Chuck_VM_Shreduler::advance( )
         for( i = 0; i < m_num_adc_channels; i++ )
         {
             m_adc->m_multi_chan[i]->m_current = frame[i] * m_adc->m_multi_chan[i]->m_gain * m_adc->m_gain;
+            m_adc->m_multi_chan[i]->m_last = m_adc->m_multi_chan[i]->m_current;
             m_adc->m_multi_chan[i]->m_time = this->now_system;
             sum += m_adc->m_multi_chan[i]->m_current;
         }
@@ -1847,7 +1958,7 @@ void Chuck_VM_Shreduler::advance( )
     // dac
     m_dac->system_tick( this->now_system );
     for( i = 0; i < m_num_dac_channels; i++ )
-        frame[i] = m_dac->m_multi_chan[i]->m_current * .5f;
+        frame[i] = m_dac->m_multi_chan[i]->m_current; // * .5f;
 
     // suck samples
     m_bunghole->system_tick( this->now_system );
@@ -1855,6 +1966,7 @@ void Chuck_VM_Shreduler::advance( )
     // tick
     audio->digi_out()->tick_out( frame, m_num_dac_channels );
 }
+
 
 
 
@@ -1868,7 +1980,10 @@ Chuck_VM_Shred * Chuck_VM_Shreduler::get( )
 
     // list empty
     if( !shred )
+    {
+        m_samps_until_next = -1;
         return NULL;
+    }
 
     // TODO: should this be <=?
     if( shred->wake_time <= ( this->now_system + .5 ) )
@@ -1881,7 +1996,11 @@ Chuck_VM_Shred * Chuck_VM_Shreduler::get( )
         shred->prev = NULL;
         
         if( shred_list )
+        {
             shred_list->prev = NULL;
+            m_samps_until_next = shred_list->wake_time - this->now_system;
+            if( m_samps_until_next < 0 ) m_samps_until_next = 0;
+        }
 
         return shred;
     }

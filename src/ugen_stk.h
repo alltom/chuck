@@ -45,7 +45,7 @@ t_CKBOOL  stk_detach( t_CKUINT type, void * data );
 
 
 // this determines STK float type and de-denormal method
-#if 1
+#ifndef __STK_USE_SINGLE_PRECISION__
 #define MY_FLOAT double
 #define CK_STK_DDN CK_DDN_DOUBLE
 #else

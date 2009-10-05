@@ -291,6 +291,8 @@ public: // shreduling
     Chuck_VM_Shred * get( );
     void advance( );
     void advance2( );
+    void advance_v( t_CKINT & num_left );
+    void set_adaptive( t_CKUINT max_block_size );
 
 public: // high-level shred interface
     t_CKBOOL remove( Chuck_VM_Shred * shred );
@@ -329,6 +331,11 @@ public:
     
     // status cache
     Chuck_VM_Status m_status;
+    
+    // max block size for adaptive block processing
+    t_CKUINT m_max_block_size;
+    t_CKBOOL m_adaptive;
+    t_CKDUR m_samps_until_next;
 };
 
 
@@ -353,7 +360,7 @@ public: // init
                          t_CKUINT buffer_size = 512, t_CKUINT num_buffers = 4,
                          t_CKUINT dac = 0, t_CKUINT adc = 0,
                          t_CKUINT dac_chan = 2, t_CKUINT adc_chan = 2,
-                         t_CKBOOL block = TRUE );
+                         t_CKBOOL block = TRUE, t_CKUINT adaptive = 0 );
     t_CKBOOL initialize_synthesis( );
     t_CKBOOL shutdown();
 

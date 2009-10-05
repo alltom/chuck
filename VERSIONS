@@ -1,4 +1,45 @@
 ---
+1.2.1.3
+  - (added) initial/experimental support for file I/O (finally)
+            (thanks to Andrew Schran, Martin Robinson)
+  - (added) new class: IO, FileIO
+            see examples/io/:
+                read-int.ck
+                read-str.ck
+                readline.ck - using readline
+                write.ck - write using <=
+                write2.ck - write using .write()
+  - (added) IO input via =>
+  - (added) IO output via <= (the "back-chuck")
+            example: fio <= x <= " " <= y <= "\n";
+  - (added) new syntax for checking if/while/for/until with IO objects
+            e.g., while( fio => i ) { ... }
+  - (added) StdOut/StdErr objects:
+            "chout" (pronounced "shout")
+            "cherr" (pronounced "Cher")
+  - (added) Hid.open() now can accept a device name parameter
+  - (added) analysis/tracking examples are now back
+            (thanks to Kassen for looking into this)
+  - (fixed) calling overloaded functions with most specific match
+            e.g., Specific extends General:
+            fun void foo( General obj ) { }
+            fun void foo( Specific obj ) { }
+            foo( obj $ Specific ); // should call foo( Specific )
+            (thanks to Robert Poor for reporting, to Kassen, David Rush,
+            Michael Heuer, and Andrew C. Smith for follow-up)
+  - (fixed) STK instruments control changes reports range issues as
+            "control value exceeds nominal range"; previously printed
+            hard-coded values that were potentially misleading
+            (thanks to Kassen for reporting)
+  - (fixed) all oscillators now produce audio for negative frequencies
+            (thanks to Luke Dahl)
+  - (fixed) incorrect UGen disconnect (thanks Kassen for reporting)
+  - (fixed) type checker now validates if/while/for/until types
+  - (fixed) linux compilation (for gcc 4.x)
+  - (fixed) complilation on OS X Snow Leopard
+
+
+---
 1.2.1.2
   - (added) dynamic, resizable arrays
                 .size( int ) resizes array; .size() returns current size()
@@ -54,6 +95,7 @@
   - (fixed) STK Mandolin no longer plays without explicit noteOn
   - (fixed) unsporked Shred instances now given id == 0 (thanks Kassen)
   - (fixed) typos in ugen_xxx.cpp and chuck-specific rtaudio.cpp (/moudi)
+
 
 ---
 1.2.1.1

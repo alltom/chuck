@@ -32,6 +32,9 @@
 // date: summer 2005
 //-----------------------------------------------------------------------------
 #include "midiio_rtmidi.h"
+
+#ifndef __DISABLE_MIDI__
+
 #include "chuck_errmsg.h"
 #include <vector>
 #include <map>
@@ -792,3 +795,36 @@ t_CKBOOL MidiMsgIn::read( MidiMsg * msg, t_CKTIME * time )
     
     return m && t;
 }
+
+#else // __DISABLE_MIDI__
+
+MidiOut::MidiOut()
+{
+    
+}
+
+MidiOut::~MidiOut()
+{
+}
+
+t_CKBOOL MidiOut::open( t_CKUINT device_num )
+{
+    return TRUE;
+}
+
+MidiIn::MidiIn()
+{
+    
+}
+
+MidiIn::~MidiIn()
+{
+    
+}
+
+t_CKBOOL MidiIn::open( t_CKUINT device_num )
+{
+    return FALSE;
+}
+
+#endif // __DISABLE_MIDI__

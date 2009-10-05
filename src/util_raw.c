@@ -32,6 +32,7 @@
 //------------------------------------------------------------------------------
 #include "util_raw.h"
 
+#ifndef __DISABLE_RAW__
 
 // data for ahh.raw...
 SAMPLE ahh_data[] = {
@@ -4724,3 +4725,60 @@ SAMPLE glot_pop_data[] = {
     0.0f,
     0
 }; t_CKUINT glot_pop_size = 521;
+
+
+#else  // __DISABLE_RAW__
+
+// begin the abuse of memory
+SAMPLE ahh_data[] = { 0.0f };
+SAMPLE britestk_data[] = { 0.0f }; 
+SAMPLE dope_data[] = { 0.0f };
+SAMPLE eee_data[] = { 0.0f };
+SAMPLE fwavblnk_data[] = { 0.0f };
+SAMPLE halfwave_data[] = { 0.0f };
+SAMPLE impuls10_data[] = { 0.0f };
+SAMPLE impuls20_data[] = { 0.0f };
+SAMPLE impuls40_data[] = { 0.0f };
+SAMPLE mand1_data[] = { 0.0f };
+SAMPLE mandpluk_data[] = { 0.0f };
+SAMPLE marmstk1_data[] = { 0.0f };
+SAMPLE ooo_data[] = { 0.0f };
+SAMPLE peksblnk_data[] = { 0.0f };
+SAMPLE ppksblnk_data[] = { 0.0f };
+SAMPLE silence_data[] = { 0.0f };
+SAMPLE sineblnk_data[] = { 0.0f };
+SAMPLE sinewave_data[] = { 0.0f };
+SAMPLE snglpeak_data[] = { 0.0f };
+SAMPLE twopeaks_data[] = { 0.0f };
+SAMPLE glot_ahh_data[] = { 0.0f };
+SAMPLE glot_eee_data[] = { 0.0f };
+SAMPLE glot_ooo_data[] = { 0.0f };
+SAMPLE glot_pop_data[] = { 0.0f };
+
+t_CKUINT ahh_size = 1;
+t_CKUINT britestk_size = 1;
+t_CKUINT dope_size = 1;
+t_CKUINT eee_size = 1;
+t_CKUINT fwavblnk_size = 1;
+t_CKUINT halfwave_size = 1;
+t_CKUINT impuls10_size = 1;
+t_CKUINT impuls20_size = 1;
+t_CKUINT impuls40_size = 1;
+t_CKUINT mand1_size = 1;
+t_CKUINT mandpluk_size = 1;
+t_CKUINT marmstk1_size = 1;
+t_CKUINT ooo_size = 1;
+t_CKUINT peksblnk_size = 1;
+t_CKUINT ppksblnk_size = 1;
+t_CKUINT silence_size = 1;
+t_CKUINT sineblnk_size = 1;
+t_CKUINT sinewave_size = 1;
+t_CKUINT snglpeak_size = 1;
+t_CKUINT twopeaks_size = 1;
+t_CKUINT glot_ahh_size = 1;
+t_CKUINT glot_eee_size = 1;
+t_CKUINT glot_ooo_size = 1;
+t_CKUINT glot_pop_size = 1;
+
+
+#endif

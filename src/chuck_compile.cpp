@@ -552,8 +552,10 @@ t_CKBOOL load_internal_modules( Chuck_Compiler * compiler )
     if( !load_module( env, opensoundcontrol_query, "opsc", "global" ) ) goto error;
     // if( !load_module( env, net_query, "net", "global" ) ) goto error;
 
+#ifndef __DISABLE_MIDI__
     if( !init_class_Midi( env ) ) goto error;
     if( !init_class_MidiRW( env ) ) goto error;
+#endif // __DISABLE_MIDI__
     if( !init_class_HID( env ) ) goto error;
 
     // clear context

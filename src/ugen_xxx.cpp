@@ -510,6 +510,8 @@ DLL_QUERY xxx_query( Chuck_DL_Query * QUERY )
     
     //! \section sound files
     
+#ifndef __DISABLE_SNDBUF__
+    
     // add sndbuf
     //! sound buffer ( now interpolating ) 
     //! reads from a variety of file formats
@@ -661,6 +663,9 @@ DLL_QUERY xxx_query( Chuck_DL_Query * QUERY )
     // end import
     if( !type_engine_import_class_end( env ) )
         return FALSE;
+    
+#endif // __DISABLE_SNDBUF__
+
 
     //---------------------------------------------------------------------
     // init as base class: Dyno
@@ -1865,6 +1870,9 @@ CK_DLL_CGET( delayp_cget_max )
     RETURN->v_dur = d->bufsize;
 }
 
+
+#ifndef __DISABLE_SNDBUF__
+
 //-----------------------------------------------------------------------------
 // name: sndbuf
 // desc: ...
@@ -2877,6 +2885,8 @@ CK_DLL_CGET( sndbuf_cget_valueAt )
     if( d->fd ) sndbuf_load( d, i );
     RETURN->v_float = ( i > d->num_frames || i < 0 ) ? 0 : d->buffer[i];
 }
+
+#endif // __DISABLE_SNDBUF__
 
 
 class Dyno_Data

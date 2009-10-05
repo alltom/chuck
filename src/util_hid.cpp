@@ -1,25 +1,25 @@
 /*----------------------------------------------------------------------------
-ChucK Concurrent, On-the-fly Audio Programming Language
-Compiler and Virtual Machine
+    ChucK Concurrent, On-the-fly Audio Programming Language
+      Compiler and Virtual Machine
 
-Copyright (c) 2004 Ge Wang and Perry R. Cook.  All rights reserved.
-http://chuck.cs.princeton.edu/
-http://soundlab.cs.princeton.edu/
+    Copyright (c) 2004 Ge Wang and Perry R. Cook.  All rights reserved.
+      http://chuck.cs.princeton.edu/
+      http://soundlab.cs.princeton.edu/
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-U.S.A.
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+    U.S.A.
 -----------------------------------------------------------------------------*/
 
 //-----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ const t_CKUINT CK_HID_TABLET_MOTION = 15;
 const t_CKUINT CK_HID_TABLET_ROTATION = 16;
 const t_CKUINT CK_HID_MSG_COUNT = 17;
 
-#ifdef __PLATFORM_MACOSX__
+#if defined(__PLATFORM_MACOSX__) && !defined(__CHIP_MODE__)
 #pragma mark OS X General HID support
 
 /* TODO: ***********************************************************************
@@ -7403,3 +7403,289 @@ const char * TiltSensor_name( int ts ){ return NULL; }
 
 
 #endif
+
+
+#ifdef __CHIP_MODE__
+
+// #include "util_iphone.h"
+
+extern int get_tilt_sensor_x();
+extern int get_tilt_sensor_y();
+extern int get_tilt_sensor_z();
+
+extern void start_hid_multi_touch();
+extern void stop_hid_multi_touch();
+
+void Hid_init(){}
+void Hid_poll(){}
+void Hid_quit(){}
+
+void Mouse_init(){}
+void Mouse_poll(){}
+void Mouse_quit(){}
+void Mouse_probe(){}
+
+int Mouse_count()
+{
+    return 1;
+}
+
+int Mouse_count_elements( int js, int type )
+{
+    return -1;
+}
+
+int Mouse_open( int m )
+{
+    if(m >= 0 && m < 1)
+    {
+        start_hid_multi_touch();
+        return 0;
+    }
+    else
+        return -1;
+}
+
+int Mouse_open( const char * name )
+{
+    return -1;
+}
+
+int Mouse_close( int m )
+{
+    if(m >= 0 && m < 1)
+    {
+        stop_hid_multi_touch();
+        return 0;
+    }
+    else
+        return -1;
+}
+
+int Mouse_send( int m, const HidMsg * msg )
+{
+    return -1;
+}
+
+const char * Mouse_name( int m )
+{
+    if(m == 0)
+        return "iPhone Multitouch";
+    else
+        return NULL;
+}
+
+int Mouse_buttons( int m )
+{
+    if(m == 0)
+        return 2;
+    else
+        return -1;
+}
+
+int Mouse_start_cursor_track()
+{
+    return -1;
+}
+
+int Mouse_stop_cursor_track()
+{
+    return -1;
+}
+
+void TiltSensor_init(){}
+void TiltSensor_quit(){}
+void TiltSensor_probe(){}
+
+int TiltSensor_count()
+{
+    return 1;
+}
+
+int TiltSensor_open( int ts )
+{
+    if(ts == 0)
+        return 0;
+    return -1;
+}
+
+int TiltSensor_close( int ts )
+{
+    if(ts == 0)
+        return 0;
+    return -1;
+}
+
+int TiltSensor_read( int ts, int type, int num, HidMsg * msg )
+{
+    if( type != CK_HID_ACCELEROMETER )
+        return -1;
+    
+    msg->idata[0] = get_tilt_sensor_x();
+    msg->idata[1] = get_tilt_sensor_y();
+    msg->idata[2] = get_tilt_sensor_z();
+    
+    return 0;
+}
+
+const char * TiltSensor_name( int ts )
+{
+    if(ts == 0)
+        return "iPhone Accelerometer";
+    else
+        return NULL;
+}
+
+// ge: SMS multi-thread poll rate
+t_CKINT TiltSensor_setPollRate( t_CKINT usec )
+{
+    return -1;
+}
+
+t_CKINT TiltSensor_getPollRate( )
+{
+    return -1;
+}
+
+void Joystick_init(){}
+
+void Joystick_poll(){}
+
+void Joystick_quit(){}
+
+void Joystick_probe(){}
+
+int Joystick_count()
+{
+    return 0;
+}
+
+int Joystick_count_elements( int js, int type )
+{
+    return -1;
+}
+
+int Joystick_open( int js )
+{
+    return -1;
+}
+
+int Joystick_open_async( int js )
+{
+    return -1;
+}
+
+int Joystick_open( const char * name )
+{
+    return -1;
+}
+
+int Joystick_close( int js )
+{
+    return -1;
+}
+
+int Joystick_send( int js, const HidMsg * msg )
+{
+    return -1;
+}
+
+
+const char * Joystick_name( int js )
+{
+    return NULL;
+}
+
+int Joystick_axes( int js )
+{
+    return -1;
+}
+
+int Joystick_buttons( int js )
+{
+    return -1;
+}
+
+int Joystick_hats( int js )
+{
+    return -1;
+}
+
+void Keyboard_init(){}
+void Keyboard_poll(){}
+void Keyboard_quit(){}
+void Keyboard_probe(){}
+
+int Keyboard_count()
+{
+    return 0;
+}
+
+int Keyboard_count_elements( int js, int type )
+{
+    return -1;
+}
+
+int Keyboard_open( int kb )
+{
+    return -1;
+}
+
+int Keyboard_open( const char * name )
+{
+    return -1;
+}
+
+int Keyboard_close( int kb )
+{
+    return -1;
+}
+
+int Keyboard_send( int kb, const HidMsg * msg )
+{
+    return -1;
+}
+
+const char * Keyboard_name( int kb )
+{
+    return NULL;
+}
+
+void WiiRemote_init(){}
+void WiiRemote_poll(){}
+void WiiRemote_quit(){}
+void WiiRemote_probe(){}
+
+int WiiRemote_count()
+{
+    return 0;
+}
+
+int WiiRemote_open( int wr )
+{
+    return -1;
+}
+
+int WiiRemote_open( const char * name )
+{
+    return -1;
+}
+
+int WiiRemote_close( int wr )
+{
+    return -1;
+}
+
+int WiiRemote_send( int wr, const HidMsg * msg )
+{
+    return -1;
+}
+
+const char * WiiRemote_name( int wr )
+{
+    return NULL;
+}
+
+
+#endif // __CHIP_MODE__
+

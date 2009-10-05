@@ -408,6 +408,10 @@ SOURCE=.\digiio_rtaudio.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\dirent.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\hidio_sdl.h
 # End Source File
 # Begin Source File
