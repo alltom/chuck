@@ -1,12 +1,11 @@
-
 CXX=gcc
 CXX_LINK=g++
 LEX=flex
 YACC=bison
 INCLUDES=
-FLAGS=-D__MACOSX_CORE__ -c
+FLAGS=-D__MACOSX_CORE__ -c -m32
 LIBS=-framework CoreAudio -framework CoreMIDI -framework CoreFoundation \
-	-framework IOKit -framework Carbon -lstdc++ -lm
+	-framework IOKit -framework Carbon -lstdc++ -lm -m32
 SF_OBJ=util_sndfile.o
 
 ifneq ($(CHUCK_STAT),)

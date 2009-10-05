@@ -31,6 +31,7 @@
 // date: Summer 2005
 //-----------------------------------------------------------------------------
 #include "util_string.h"
+#include <stdio.h>
 using namespace std;
 
 

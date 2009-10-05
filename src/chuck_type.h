@@ -52,7 +52,7 @@ typedef enum {
     te_complex, te_polar, te_string, te_thread, te_shred, te_class,
     te_function, te_object, te_user, te_array, te_null, te_ugen, te_uana, 
     te_event, te_void, te_stdout, te_stderr, te_adc, te_dac, te_bunghole, 
-    te_uanablob, te_io, te_fileio, te_multi
+    te_uanablob, te_io, te_fileio, te_chout, te_cherr, te_multi
 } te_Type;
 
 
@@ -809,6 +809,8 @@ extern Chuck_Type t_class;
 extern Chuck_Type t_event;
 extern Chuck_Type t_io;
 extern Chuck_Type t_fileio;
+extern Chuck_Type t_chout;
+extern Chuck_Type t_cherr;
 extern Chuck_Type t_ugen;
 extern Chuck_Type t_uana;
 extern Chuck_Type t_uanablob;
