@@ -33,8 +33,15 @@
 #include "chuck_vm.h"
 #include "chuck_errmsg.h"
 #include "chuck_globals.h"
+#ifndef __DISABLE_RTAUDIO__
 #include "rtaudio.h"
+#endif // __DISABLE_RTAUDIO__
+#if defined(__CHIP_MODE__)
+#include "../small.h">
+#endif // __CHIP_MODE__
+#ifndef __DISABLE_MIDI__
 #include "rtmidi.h"
+#endif // __DISABLE_MIDI__
 // #include <signal.h>
 #if (defined(__WINDOWS_DS__) || defined(__WINDOWS_ASIO__)) && !defined(__WINDOWS_PTHREAD__)
 #include <windows.h>
@@ -84,6 +91,7 @@ DWORD__ Digitalio::m_xrun = 0;
 
 
 
+#ifndef __DISABLE_RTAUDIO__
 //-----------------------------------------------------------------------------
 // name: print()
 // desc: ...
@@ -121,6 +129,7 @@ void print( const RtAudioDeviceInfo & info )
         }
     }
 }
+#endif // __DISABLE_RTAUDIO__
 
 
 
@@ -131,6 +140,7 @@ void print( const RtAudioDeviceInfo & info )
 //-----------------------------------------------------------------------------
 void Digitalio::probe()
 {
+#ifndef __DISABLE_RTAUDIO__
     RtAudio * rta = NULL;
     RtAudioDeviceInfo info;
     
@@ -166,6 +176,7 @@ void Digitalio::probe()
     }
 
     delete rta;
+#endif // __DISABLE_RTAUDIO__
 
     return;
 }
@@ -407,6 +418,7 @@ BOOL__ Digitalio::initialize( DWORD__ num_dac_channels,
     // if rt_audio is false, then set block to FALSE to avoid deadlock
     if( !rt_audio ) m_block = FALSE;
 
+#ifndef __DISABLE_RTAUDIO__    
     // if real-time audio
     if( rt_audio )
     {
@@ -492,6 +504,15 @@ BOOL__ Digitalio::initialize( DWORD__ num_dac_channels,
         // pop indent
         EM_poplog();
     }
+#endif // __DISABLE_RTAUDIO__
+
+#if defined(__CHIP_MODE__)
+    if( !SMALL::init( sampling_rate, buffer_size, 2 ) )
+    {
+        EM_error2( 0, "%s", "(chuck)error: unable to initialize SMALL..." );
+        return m_init = FALSE;
+    }
+#endif // __CHIP_MODE__
 
     if( m_use_cb )
     {
@@ -675,17 +696,38 @@ int Digitalio::cb2( char * buffer, int buffer_size, void * user_data )
 
 
 
+#ifdef __SMALL_MODE__
+//-----------------------------------------------------------------------------
+// name: small_cb()
+// desc: ...
+//-----------------------------------------------------------------------------
+void small_cb( Float32 * buffer, UInt32 numFrames, void * userData )
+{
+    Digitalio::cb2( (char *)buffer, numFrames, userData );
+}
+#endif // __SMALL_MODE__
+
+
+
+
 //-----------------------------------------------------------------------------
 // name: start()
 // desc: ...
 //-----------------------------------------------------------------------------
 BOOL__ Digitalio::start( )
 {
+#ifndef __DISABLE_RTAUDIO__
     try{ if( !m_start )
               m_rtaudio->startStream();
          m_start = TRUE;
     } catch( RtError err ){ return FALSE; }
-    
+#endif // __DISABLE_RTAUDIO__
+
+#if defined(__CHIP_MODE__)
+    if( !m_start )
+        m_start = SMALL::start( small_cb, g_vm );
+#endif // __CHIP_MODE__
+
     return m_start;
 }
 
@@ -698,10 +740,18 @@ BOOL__ Digitalio::start( )
 //-----------------------------------------------------------------------------
 BOOL__ Digitalio::stop( )
 {
+#ifndef __DISABLE_RTAUDIO__
     try{ if( m_start )
              m_rtaudio->stopStream();
          m_start = FALSE;
     } catch( RtError err ){ return FALSE; }
+#endif // __DISABLE_RTAUDIO__
+
+#if defined(__CHIP_MODE__)
+    if( m_start )
+        SMALL::stop();
+    m_start = FALSE;
+#endif
 
     return !m_start;
 }
@@ -715,6 +765,7 @@ BOOL__ Digitalio::stop( )
 //-----------------------------------------------------------------------------
 BOOL__ Digitalio::tick( )
 {
+#ifndef __DISABLE_RTAUDIO__
     try
     {
         if( ++m_tick_count >= m_start )
@@ -727,6 +778,9 @@ BOOL__ Digitalio::tick( )
         
         return TRUE;
     } catch( RtError err ){ return FALSE; }
+#endif // __DISABLE_RTAUDIO__
+    
+    return FALSE;
 }
 
 
@@ -739,14 +793,18 @@ BOOL__ Digitalio::tick( )
 void Digitalio::shutdown()
 {
     if( !m_init ) return;
+
+#ifndef __DISABLE_RTAUDIO__
     if( m_start )
     {
         if( m_use_cb ) m_rtaudio->cancelStreamCallback();
         m_rtaudio->stopStream();
     }
-    
+
     m_rtaudio->closeStream();
     SAFE_DELETE( m_rtaudio );
+#endif // __DISABLE_RTAUDIO__
+
     m_init = FALSE;
     m_start = FALSE;
     
@@ -788,9 +846,15 @@ DigitalOut::~DigitalOut()
 //-----------------------------------------------------------------------------
 BOOL__ DigitalOut::initialize( )
 {
+#ifndef __DISABLE_RTAUDIO__
     // set pointer to beginning of local buffer
     m_data_ptr_out = Digitalio::m_use_cb ? Digitalio::m_buffer_out
         : (SAMPLE *)Digitalio::audio()->getStreamBuffer();
+#else
+    // set pointer
+    assert( Digitalio::m_use_cb );
+    m_data_ptr_out = Digitalio::m_buffer_out;
+#endif // __DISABLE_RTAUDIO__
     // calculate the end of the buffer
     m_data_max_out = m_data_ptr_out + 
         Digitalio::buffer_size() * Digitalio::num_channels_out();
@@ -972,9 +1036,15 @@ BOOL__ DigitalIn::initialize( )
 {
     m_data = new SAMPLE[Digitalio::buffer_size() * Digitalio::num_channels_in()];
     memset( m_data, 0, Digitalio::buffer_size() * Digitalio::num_channels_in() * sizeof(SAMPLE) );
+#ifndef __DISABLE_RTAUDIO__
     // set the buffer to the beginning of the local buffer
     m_data_ptr_in = Digitalio::m_use_cb ? m_data
         : (SAMPLE *)Digitalio::audio()->getStreamBuffer();
+#else
+    // set the buffer pointer
+    assert( Digitalio::m_use_cb );
+    m_data_ptr_in = m_data;
+#endif // __DISABLE_RTAUDIO__
     // calculate past buffer
     m_data_max_in = m_data_ptr_in + 
         Digitalio::buffer_size() * Digitalio::num_channels_in();

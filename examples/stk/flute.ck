@@ -4,7 +4,7 @@
 Flute flute => PoleZero f => JCRev r => dac;
 .75 => r.gain;
 .05 => r.mix;
-1 => f.blockZero;
+.99 => f.blockZero;
 
 // our notes
 [ 61, 63, 65, 66, 68 ] @=> int notes[];

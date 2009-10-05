@@ -190,8 +190,8 @@ a_Class_Body new_class_body( a_Section section, int pos );
 a_Class_Body prepend_class_body( a_Section section, a_Class_Body body, int pos );
 a_Class_Ext new_class_ext( a_Id_List extend_id, a_Id_List impl_list, int pos );
 a_Class_Def new_iface_def( ae_Keyword class_decl, a_Id_List xid, a_Class_Ext ext, a_Class_Body body, int pos );
-a_Id_List new_id_list( c_str xid, int pos );
-a_Id_List prepend_id_list( c_str xid, a_Id_List list, int pos );
+a_Id_List new_id_list( c_constr xid, int pos );
+a_Id_List prepend_id_list( c_constr xid, a_Id_List list, int pos );
 void clean_exp( a_Exp exp );
 a_Func_Def new_func_def( ae_Keyword func_decl, ae_Keyword static_decl,
                          a_Type_Decl type_decl, c_str name,

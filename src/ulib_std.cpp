@@ -65,6 +65,7 @@ int setenv( const char *n, const char *v, int i )
 using namespace std;
 
 
+#ifndef __DISABLE_KBHIT__
 // KBHit
 CK_DLL_CTOR( KBHit_ctor );
 CK_DLL_DTOR( KBHit_dtor );
@@ -77,7 +78,9 @@ CK_DLL_MFUN( KBHit_getchar );
 CK_DLL_MFUN( KBHit_can_wait );
 
 static t_CKUINT KBHit_offset_data = 0;
+#endif // __DISABLE_KBHIT__
 
+#ifndef __DISABLE_PROMPTER__
 // Skot functions
 CK_DLL_CTOR( Skot_ctor );
 CK_DLL_DTOR( Skot_dtor );
@@ -88,6 +91,7 @@ CK_DLL_MFUN( Skot_getLine );
 CK_DLL_MFUN( Skot_can_wait );
 
 static t_CKUINT Skot_offset_data = 0;
+#endif // __DISABLE_PROMPTER__
 
 // StrTok functions
 CK_DLL_CTOR( StrTok_ctor );
@@ -253,6 +257,7 @@ DLL_QUERY libstd_query( Chuck_DL_Query * QUERY )
 
     Chuck_DL_Func * func = NULL;
     
+#ifndef __DISABLE_KBHIT__
     // KBHit
     // begin class (KBHit)
     if( !type_engine_import_class_begin( env, "KBHit", "Event",
@@ -297,11 +302,13 @@ DLL_QUERY libstd_query( Chuck_DL_Query * QUERY )
 
     // start it
     KBHitManager::init();
+#endif // __DISABLE_KBHIT__
 
 
     // register deprecate
     type_engine_register_deprecate( env, "Skot", "ConsoleInput" );
 
+#ifndef __DISABLE_PROMPTER__
     // begin class (Skot)
     if( !type_engine_import_class_begin( env, "ConsoleInput", "Event",
                                          env->global(), Skot_ctor,
@@ -335,6 +342,7 @@ DLL_QUERY libstd_query( Chuck_DL_Query * QUERY )
 
     // end class
     type_engine_import_class_end( env );
+#endif // __DISABLE_PROMPTER__
 
 
     // register deprecate
@@ -725,6 +733,7 @@ CK_DLL_SFUN( dbtorms_impl )
 
 
 
+#ifndef __DISABLE_KBHIT__
 // static
 CBufferAdvance * KBHitManager::the_buf = NULL;
 t_CKINT KBHitManager::the_onoff = 0;
@@ -785,6 +794,7 @@ t_CKBOOL KBHitManager::init()
     the_init = TRUE;
     the_thread = new XThread;
     the_thread->start( kb_loop, NULL );
+
 
     return TRUE;
 }
@@ -1000,10 +1010,12 @@ CK_DLL_MFUN( KBHit_can_wait )
     KBHit * kb = (KBHit *)(OBJ_MEMBER_INT(SELF, KBHit_offset_data));
     RETURN->v_int = kb->empty();
 }
+#endif // __DISABLE_KBHIT__
 
 
 
 
+#ifndef __DISABLE_PROMPTER__
 class LineEvent : public Chuck_Event
 {
 public:
@@ -1198,6 +1210,7 @@ CK_DLL_MFUN( Skot_can_wait )
     LineEvent * le = (LineEvent *)OBJ_MEMBER_INT(SELF, Skot_offset_data);
     RETURN->v_int = le->can_wait();
 }
+#endif // __DISABLE_PROMPTER__
 
 
 // StrTok

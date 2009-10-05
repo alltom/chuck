@@ -72,6 +72,8 @@ public: // src
     t_CKBOOL is_connected_from( Chuck_UGen * src );
     t_CKUINT disconnect( t_CKBOOL recursive );
     t_CKUINT system_tick( t_CKTIME now );
+    t_CKUINT system_tick_v( t_CKTIME now, t_CKUINT numFrames );
+    t_CKBOOL alloc_v( t_CKUINT size );
 
 protected:
     t_CKVOID add_by( Chuck_UGen * dest, t_CKBOOL isUpChuck );
@@ -117,6 +119,10 @@ public: // data
     SAMPLE m_gain;
     SAMPLE m_pan;
     t_CKINT m_op;
+    
+    // block processing
+    SAMPLE * m_sum_v;
+    SAMPLE * m_current_v;
 
     // the shred on which the ugen is created
     Chuck_VM_Shred * shred;

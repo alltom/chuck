@@ -737,7 +737,7 @@ a_Class_Ext new_class_ext( a_Id_List extend_id, a_Id_List impl_list, int pos )
     return a;
 }
 
-a_Id_List new_id_list( c_str xid, int pos )
+a_Id_List new_id_list( c_constr xid, int pos )
 {
     a_Id_List a = (a_Id_List)checked_malloc( sizeof( struct a_Id_List_ ) );
     a->xid = insert_symbol( xid );
@@ -747,7 +747,7 @@ a_Id_List new_id_list( c_str xid, int pos )
     return a;
 }
 
-a_Id_List prepend_id_list( c_str xid, a_Id_List list, int pos )
+a_Id_List prepend_id_list( c_constr xid, a_Id_List list, int pos )
 {
     a_Id_List a = new_id_list( xid, pos );
     a->next = list;

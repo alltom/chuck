@@ -6,12 +6,13 @@ version: 1.2.x.x (dracula)
 
 ChucK home:
     http://chuck.cs.princeton.edu/
+    http://chuck.stanford.edu/
 
 Got questions?
     http://chuck.cs.princeton.edu/community.html
 
 email us:
-    gewang@cs.princeton.edu
+    gewang@cs.princeton.edu | ge@ccrma.stanford.edu
 
 online version of this document:
     http://chuck.cs.princeton.edu/doc/build/
@@ -63,18 +64,18 @@ directory name):
 
    %> make
    [chuck build]: please use one of the following configurations:
-       make osx-ppc, make osx-intel, make win32,
+       make osx, make osx-ub, make win32,
        make linux-oss, make linux-alsa, or make linux-jack
 
 Now, type the command corresponding to your platform... 
 
-for example, for MacOS X (PowerPC):
+for example, for MacOS X (Universal Binary: PowerPC + Intel):
 
-   %> make osx-ppc
+   %> make osx-ub
 
-or for MacOS X (Intel):
+or for MacOS X (current):
 
-   %> make osx-intel
+   %> make osx
 
 etc...
 
