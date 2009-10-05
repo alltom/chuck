@@ -1380,7 +1380,8 @@ CNoise_Data::setMode( const char * c ) {
 CK_DLL_CTRL( cnoise_ctrl_mode )
 {
     CNoise_Data * d = ( CNoise_Data * )OBJ_MEMBER_UINT(SELF, cnoise_offset_data);
-    const char * mode= (const char *)*(char **)GET_CK_STRING(ARGS);
+    //const char * mode= (const char *)*(char **)GET_CK_STRING(ARGS);
+    const char * mode= GET_NEXT_STRING(ARGS)->str.c_str();
     d->setMode(mode);
 }
 
