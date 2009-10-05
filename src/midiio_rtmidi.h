@@ -35,7 +35,9 @@
 #define __MIDI_IO_H__
 
 #include "chuck_def.h"
+#ifndef __DISABLE_MIDI__
 #include "rtmidi.h"
+#endif
 #include "util_buffers.h"
 
 
@@ -64,6 +66,13 @@ union MidiMsg
     t_CKBYTE data[4];
 //    t_CKUINT dw;
 };
+
+
+
+
+// forward reference
+class RtMidiOut;
+class RtMidiIn;
 
 
 

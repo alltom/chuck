@@ -264,7 +264,11 @@ static void usage()
 // name: main()
 // desc: entry point
 //-----------------------------------------------------------------------------
-int main( int argc, const char ** argv )
+#ifndef __ALTER_ENTRY_POINT__
+  int main( int argc, const char ** argv )
+#else
+  extern "C" int chuck_main( int argc, const char ** argv )
+#endif
 {
     Chuck_Compiler * compiler = NULL;
     Chuck_VM * vm = NULL;
@@ -290,13 +294,16 @@ int main( int argc, const char ** argv )
     t_CKBOOL load_hid = FALSE;
     t_CKBOOL enable_server = TRUE;
     t_CKBOOL do_watchdog = TRUE;
+    t_CKINT  adaptive_size = 0;
     t_CKINT  log_level = CK_LOG_CORE;
     t_CKINT  deprecate_level = 1; // warn
 
     string   filename = "";
     vector<string> args;
 
-#if defined(__MACOSX_CORE__)
+#if defined(__DISABLE_WATCHDOG__)
+    do_watchdog = FALSE;
+#elif defined(__MACOSX_CORE__)
     do_watchdog = TRUE;
 #elif defined(__PLATFORM_WIN32__) && !defined(__WINDOWS_PTHREAD__)
     do_watchdog = TRUE;
@@ -398,6 +405,8 @@ int main( int argc, const char ** argv )
                 log_level = argv[i][9] ? atoi( argv[i]+9 ) : CK_LOG_INFO;
             else if( !strncmp(argv[i], "-v", 2) )
                 log_level = argv[i][2] ? atoi( argv[i]+2 ) : CK_LOG_INFO;
+            else if( !strncmp(argv[i], "--adaptive", 10) )
+                adaptive_size = argv[i][10] ? atoi( argv[i]+10 ) : -1;
             else if( !strncmp(argv[i], "--deprecate", 11) )
             {
                 // get the rest
@@ -463,13 +472,15 @@ int main( int argc, const char ** argv )
     {
         Digitalio::probe();
 
+#ifndef __DISABLE_MIDI__
         EM_error2b( 0, "" );
         probeMidiIn();
         EM_error2b( 0, "" );
         probeMidiOut();
         EM_error2b( 0, "" );
-        
-        //HidInManager::probeHidIn();
+#endif  // __DISABLE_MIDI__
+
+        // HidInManager::probeHidIn();
         
         // exit
         exit( 0 );
@@ -486,6 +497,8 @@ int main( int argc, const char ** argv )
     Chuck_VM::our_priority = g_priority;
     // set watchdog
     g_do_watchdog = do_watchdog;
+    // set adaptive size
+    if( adaptive_size < 0 ) adaptive_size = buffer_size;
 
     if ( !files && vm_halt && !enable_shell )
     {
@@ -519,7 +532,8 @@ int main( int argc, const char ** argv )
     // allocate the vm - needs the type system
     vm = g_vm = new Chuck_VM;
     if( !vm->initialize( enable_audio, vm_halt, srate, buffer_size,
-                         num_buffers, dac, adc, dac_chans, adc_chans, block ) )
+                         num_buffers, dac, adc, dac_chans, adc_chans,
+                         block, adaptive_size ) )
     {
         fprintf( stderr, "[chuck]: %s\n", vm->last_error() );
         exit( 1 );
@@ -545,8 +559,10 @@ int main( int argc, const char ** argv )
         exit( 1 );
     }
 
+#ifndef __ALTER_HID__
     // pre-load hid
     if( load_hid ) HidInManager::init();
+#endif // __ALTER_HID__
 
     // catch SIGINT
     signal( SIGINT, signal_int );
@@ -656,6 +672,7 @@ int main( int argc, const char ** argv )
     // server
     if( enable_server )
     {
+#ifndef __DISABLE_OTF_SERVER__
         // log
         EM_log( CK_LOG_SYSTEM, "starting listener on port: %d...", g_port );
 
@@ -675,6 +692,7 @@ int main( int argc, const char ** argv )
             g_tid_otf = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)otf_cb, NULL, 0, 0 );
     #endif
         }
+#endif // __DISABLE_OTF_SERVER__
     }
     else
     {

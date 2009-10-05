@@ -1093,6 +1093,34 @@ public:
 
 
 //-----------------------------------------------------------------------------
+// name: struct Chuck_Instr_Branch_Eq_int_IO_good
+// desc: ...
+//-----------------------------------------------------------------------------
+struct Chuck_Instr_Branch_Eq_int_IO_good : public Chuck_Instr_Branch_Op
+{
+public:
+    Chuck_Instr_Branch_Eq_int_IO_good( t_CKUINT jmp ) { this->set( jmp ); }
+    virtual void execute( Chuck_VM * vm, Chuck_VM_Shred * shred );
+};
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: struct Chuck_Instr_Branch_Neq_int_IO_good
+// desc: ...
+//-----------------------------------------------------------------------------
+struct Chuck_Instr_Branch_Neq_int_IO_good : public Chuck_Instr_Branch_Op
+{
+public:
+    Chuck_Instr_Branch_Neq_int_IO_good( t_CKUINT jmp ) { this->set( jmp ); }
+    virtual void execute( Chuck_VM * vm, Chuck_VM_Shred * shred );
+};
+
+
+
+
+//-----------------------------------------------------------------------------
 // name: struct Chuck_Instr_Lt_int
 // desc: ...
 //-----------------------------------------------------------------------------
@@ -2734,6 +2762,32 @@ public:
 // desc: ...
 //-----------------------------------------------------------------------------
 struct Chuck_Instr_Bunghole : public Chuck_Instr
+{
+public:
+    virtual void execute( Chuck_VM * vm, Chuck_VM_Shred * shred );
+};
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: struct Chuck_Instr_Chout
+// desc: ...
+//-----------------------------------------------------------------------------
+struct Chuck_Instr_Chout : public Chuck_Instr
+{
+public:
+    virtual void execute( Chuck_VM * vm, Chuck_VM_Shred * shred );
+};
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: struct Chuck_Instr_Cherr
+// desc: ...
+//-----------------------------------------------------------------------------
+struct Chuck_Instr_Cherr : public Chuck_Instr
 {
 public:
     virtual void execute( Chuck_VM * vm, Chuck_VM_Shred * shred );

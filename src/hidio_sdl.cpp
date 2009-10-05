@@ -429,9 +429,26 @@ t_CKBOOL HidIn::open( t_CKINT device_type, t_CKINT device_num )
     // close if already opened
     if( m_valid )
         this->close();
-
+    
     // open
     return m_valid = HidInManager::open( this, device_type, device_num );
+}
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: open()
+// desc: open
+//-----------------------------------------------------------------------------
+t_CKBOOL HidIn::open( std::string & name, t_CKUINT device_type )
+{
+    // close if already opened
+    if( m_valid )
+        this->close();
+    
+    // open
+    return m_valid = HidInManager::open( this, device_type, name );
 }
 
 
@@ -660,6 +677,76 @@ t_CKBOOL HidInManager::open( HidIn * hin, t_CKINT device_type, t_CKINT device_nu
     // done
     return TRUE;
 }
+
+
+
+t_CKBOOL HidInManager::open( HidIn * hin, t_CKINT device_type, std::string & device_name )
+{
+    // init?
+    if( has_init == FALSE )
+    {
+        init();
+    }
+    
+    t_CKINT device_type_start = 1;
+    t_CKINT device_type_finish = CK_HID_DEV_COUNT;
+    
+    if(device_type != CK_HID_DEV_COUNT)
+    {
+        // check type
+        if( device_type < 1 || device_type >= CK_HID_DEV_COUNT )
+        {
+            // log
+            EM_log( CK_LOG_WARNING, "HidInManager: open() failed -> invalid type '%d'...", 
+                    device_type );
+            return FALSE;
+        }
+        
+        device_type_start = device_type;
+        device_type_finish = device_type + 1;
+    }
+    
+    for(t_CKINT i = device_type_start; i < device_type_finish; i++)
+    {
+        t_CKINT max_devices = default_drivers[i].count();
+        
+        for(t_CKINT j = 0; j < max_devices; j++)
+        {
+            const char * _name = NULL;
+            
+            if( !default_drivers[i].name )
+                _name = default_drivers[i].driver_name;
+            else
+            {
+                _name = default_drivers[i].name( ( int ) j );
+            }
+            
+            if(!_name)
+            {
+                continue;
+            }
+            
+            std::string name = _name;
+            
+//            PhyHidDevIn * phyHid = devices[j];
+//            if(!phyHid)
+//                continue;
+//            
+//            std::string name = phyHid->name();
+            
+            if(name == device_name)
+            {
+                return open( hin, i, j );
+            }
+        }
+    }
+    
+    EM_log( CK_LOG_WARNING, "HidInManager: open() failed -> no device named '%s'...", 
+            device_name.c_str() );
+    
+    return FALSE;
+}
+
 
 //-----------------------------------------------------------------------------
 // name: close()

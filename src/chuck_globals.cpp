@@ -41,7 +41,7 @@
 
 
 // current version
-const char CK_VERSION[] = "1.2.1.2 (dracula)";
+const char CK_VERSION[] = "1.2.1.3 (dracula)";
 
 // global virtual machine
 Chuck_VM * g_vm = NULL;
@@ -87,12 +87,18 @@ extern "C" void all_detach()
     EM_pushlog();
     // close stk file handles
     stk_detach( 0, NULL );
+#ifndef __DISABLE_MIDI__
     // close midi file handles
     midirw_detach();
+#endif // __DISABLE_MIDI__
+#ifndef __DISABLE_KBHIT__
     // shutdown kb loop
     KBHitManager::shutdown();
+#endif // __DISABLE_KBHIT__
+#ifndef __ALTER_HID__
     // shutdown HID
     HidInManager::cleanup();
+#endif // __ALTER_HID__
     // pop
     EM_poplog();
 }

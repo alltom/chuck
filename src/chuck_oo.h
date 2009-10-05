@@ -28,7 +28,7 @@
 //
 // author: Ge Wang (gewang@cs.princeton.edu)
 //         Perry R. Cook (prc@cs.princeton.edu)
-// date: Autumn 2002
+// date: Autumn 2005
 //-----------------------------------------------------------------------------
 #ifndef __CHUCK_OO_H__
 #define __CHUCK_OO_H__
@@ -40,6 +40,11 @@
 #include <queue>
 #include <fstream>
 
+#ifndef __PLATFORM_WIN32__
+  #include <dirent.h>
+#else
+  struct DIR;
+#endif
 
 // forward reference
 struct Chuck_Type;
@@ -359,64 +364,48 @@ public:
 struct Chuck_IO : Chuck_Object
 {
 public:
-    virtual ~Chuck_IO();
-
-public:
-    // query
-    virtual t_CKBOOL more() = 0;
-    virtual t_CKBOOL eof() = 0;
-    virtual t_CKBOOL good2read() = 0;
-    virtual t_CKBOOL good2write() = 0;
-
-    // ascii
-    virtual t_CKINT readInt() = 0;
-    virtual t_CKFLOAT readFloat() = 0;
-    virtual std::string readString() = 0;
-    virtual std::string readLine() = 0;
-    virtual t_CKINT writeInt() = 0;
-    virtual t_CKFLOAT writeFloat() = 0;
-    virtual std::string writeString() = 0;
-    virtual std::string writeLine() = 0;
-    
-    // binary
-    virtual t_CKINT read32i() = 0;
-    virtual t_CKINT read24i() = 0;
-    virtual t_CKINT read16i() = 0;
-    virtual t_CKINT read8i() = 0;
-    virtual t_CKSINGLE read32f() = 0;
-    virtual t_CKDOUBLE read64f() = 0;
-
-    // done
-    virtual t_CKBOOL close() = 0;
-
-// constants
-public:
-    static const t_CKINT READ;
-    static const t_CKINT WRITE;
-    static const t_CKINT APPEND;
-    static const t_CKINT TRUNCATE;
-    static const t_CKINT ASCII;
-    static const t_CKINT BINARY;
-
-// static utilities
-public:
-    static Chuck_IO_File * openFile( const std::string & path, t_CKINT flags );
-
-    // more stuff
-    static t_CKBOOL isFile( const std::string & path );
-    static t_CKBOOL isDir( const std::string & path );
-    static t_CKINT getSize( const std::string & path );
-    static std::string currentDir();
-    static std::string changeDir( const std::string & to );
-    static void getContent( std::vector<std::string> & content );
-    static std::string baseName( const std::string & path );
-
-// can't instantiate one of these
-protected:
     Chuck_IO();
+    virtual ~Chuck_IO();
+    
+public:
+    // meta
+    virtual t_CKBOOL good() = 0;
+    virtual void close() = 0;
+    virtual void flush() = 0;
+    virtual t_CKINT mode() = 0;
+    virtual void mode( t_CKINT flag ) = 0;
+    
+    // reading
+    virtual Chuck_String * readLine() = 0;
+    virtual t_CKINT readInt( t_CKINT flags ) = 0;
+    virtual t_CKFLOAT readFloat() = 0;
+    virtual t_CKBOOL readString( std::string & str ) = 0;
+    virtual t_CKBOOL eof() = 0;
+    
+    // writing
+    virtual void write( const std::string & val ) = 0;
+    virtual void write( t_CKINT val ) = 0;
+    virtual void write( t_CKFLOAT val ) = 0;
+    
+    // constants
+public:
+    static const t_CKINT READ_INT32;
+    static const t_CKINT READ_INT16;
+    static const t_CKINT READ_INT8;
+    
+    // asynchronous I/O members
+    static const t_CKINT MODE_SYNC;
+    static const t_CKINT MODE_ASYNC;
+    Chuck_Event *m_asyncEvent;
+    XThread *m_thread;
+    struct async_args {
+        Chuck_IO_File *fileio_obj;
+        void *RETURN; // actually a Chuck_DL_Return
+        t_CKINT intArg;
+        t_CKFLOAT floatArg;
+        std::string stringArg;
+    };
 };
-
-
 
 
 //-----------------------------------------------------------------------------
@@ -428,47 +417,148 @@ struct Chuck_IO_File : Chuck_IO
 public:
     Chuck_IO_File();
     virtual ~Chuck_IO_File();
-
-public:
-    // open
-    t_CKBOOL open( const std::string & path, t_CKINT flags );
-    t_CKBOOL close();
-
-    // query
-    virtual t_CKBOOL more();
-    virtual t_CKBOOL eof();
-    virtual t_CKBOOL good2read();
-    virtual t_CKBOOL good2write();
-
-    // ascii
-    virtual t_CKINT readInt();
-    virtual t_CKFLOAT readFloat();
-    virtual std::string readString();
-    virtual std::string readLine();
-    virtual t_CKBOOL writeInt( t_CKINT val );
-    virtual t_CKBOOL writeFloat( t_CKFLOAT val );
-    virtual t_CKBOOL writeString( const std::string & val );
-    virtual t_CKBOOL writeLine( const std::string & val );
     
-    // binary
-    virtual t_CKINT read32i();
-    virtual t_CKINT read24i();
-    virtual t_CKINT read16i();
-    virtual t_CKINT read8i();
-    virtual t_CKSINGLE read32f();
-    virtual t_CKDOUBLE read64f();
-
+public:
+    // meta
+    virtual t_CKBOOL open( const std::string & path, t_CKINT flags );
+    virtual t_CKBOOL good();
+    virtual void close();
+    virtual void flush();
+    virtual t_CKINT mode();
+    virtual void mode( t_CKINT flag );
+    virtual t_CKINT size();
+    
+    // seeking
+    virtual void seek( t_CKINT pos );
+    virtual t_CKINT tell();
+    
+    // directories
+    virtual t_CKINT isDir();
+    virtual Chuck_Array4 * dirList();
+    
+    // reading
+    // virtual Chuck_String * read( t_CKINT length );
+    virtual Chuck_String * readLine();
+    virtual t_CKINT readInt( t_CKINT flags );
+    virtual t_CKFLOAT readFloat();
+    virtual t_CKBOOL readString( std::string & str );
+    virtual t_CKBOOL eof();
+    
+    // reading -- async
+    /* TODO: doesn't look like asynchronous reads will work
+     static THREAD_RETURN ( THREAD_TYPE read_thread ) ( void *data );
+     static THREAD_RETURN ( THREAD_TYPE readLine_thread ) ( void *data );
+     static THREAD_RETURN ( THREAD_TYPE readInt_thread ) ( void *data );
+     static THREAD_RETURN ( THREAD_TYPE readFloat_thread ) ( void *data );
+     */
+    
+    // writing
+    virtual void write( const std::string & val );
+    virtual void write( t_CKINT val );
+    virtual void write( t_CKFLOAT val );
+    
+    // writing -- async
+    static THREAD_RETURN ( THREAD_TYPE writeStr_thread ) ( void *data );
+    static THREAD_RETURN ( THREAD_TYPE writeInt_thread ) ( void *data );
+    static THREAD_RETURN ( THREAD_TYPE writeFloat_thread ) ( void *data );
+    
+public:
+    // constants
+    static const t_CKINT FLAG_READ_WRITE;
+    static const t_CKINT FLAG_READONLY;
+    static const t_CKINT FLAG_WRITEONLY;
+    static const t_CKINT FLAG_APPEND;
+    static const t_CKINT TYPE_ASCII;
+    static const t_CKINT TYPE_BINARY;
+    
 protected:
-    // open floags
+    // open flags
     t_CKINT m_flags;
-    // ready flags
-    t_CKINT m_ready_flags;
-    // in file
+    // I/O mode
+    t_CKINT m_iomode;
+    // file stream
     std::fstream m_io;
+    // directory pointer
+    DIR * m_dir;
+    // directory location
+    long m_dir_start;
     // path
     std::string m_path;
 };
 
+
+
+
+//-----------------------------------------------------------------------------
+// name: Chuck_IO_Chout
+// desc: Chuck console IO out
+//-----------------------------------------------------------------------------
+struct Chuck_IO_Chout : Chuck_IO
+{
+public:
+    Chuck_IO_Chout();
+    virtual ~Chuck_IO_Chout();
+
+    static Chuck_IO_Chout * our_chout;
+    static Chuck_IO_Chout * getInstance();
+    
+public:
+    // meta
+    virtual t_CKBOOL good();
+    virtual void close();
+    virtual void flush();
+    virtual t_CKINT mode();
+    virtual void mode( t_CKINT flag );
+    
+    // reading
+    virtual Chuck_String * readLine();
+    virtual t_CKINT readInt( t_CKINT flags );
+    virtual t_CKFLOAT readFloat();
+    virtual t_CKBOOL readString( std::string & str );
+    virtual t_CKBOOL eof();
+
+    // writing
+    virtual void write( const std::string & val );
+    virtual void write( t_CKINT val );
+    virtual void write( t_CKFLOAT val );
+};
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: Chuck_IO_Cherr
+// desc: Chuck console IO err
+//-----------------------------------------------------------------------------
+struct Chuck_IO_Cherr : Chuck_IO
+{
+public:
+    Chuck_IO_Cherr();
+    virtual ~Chuck_IO_Cherr();
+    
+    static Chuck_IO_Cherr * our_cherr;
+    static Chuck_IO_Cherr * getInstance();
+    
+public:
+    // meta
+    virtual t_CKBOOL good();
+    virtual void close();
+    virtual void flush();
+    virtual t_CKINT mode();
+    virtual void mode( t_CKINT flag );
+    
+    // reading
+    virtual Chuck_String * readLine();
+    virtual t_CKINT readInt( t_CKINT flags );
+    virtual t_CKFLOAT readFloat();
+    virtual t_CKBOOL readString( std::string & str );
+    virtual t_CKBOOL eof();
+    
+    // writing
+    virtual void write( const std::string & val );
+    virtual void write( t_CKINT val );
+    virtual void write( t_CKFLOAT val );
+};
 
 
 

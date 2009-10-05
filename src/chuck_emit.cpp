@@ -500,6 +500,15 @@ t_CKBOOL emit_engine_emit_if( Chuck_Emitter * emit, a_Stmt_If stmt )
         break;
         
     default:
+        // check for IO
+        if( isa( stmt->cond->type, &t_io ) )
+        {
+            // push 0
+            emit->append( new Chuck_Instr_Reg_Push_Imm( 0 ) );
+            op = new Chuck_Instr_Branch_Eq_int_IO_good( 0 );
+            break;
+        }
+
         EM_error2( stmt->cond->linepos,
             "(emit): internal error: unhandled type '%s' in if condition",
             stmt->cond->type->name.c_str() );
@@ -586,9 +595,18 @@ t_CKBOOL emit_engine_emit_for( Chuck_Emitter * emit, a_Stmt_For stmt )
             break;
         
         default:
+            // check for IO
+            if( isa( stmt->c2->stmt_exp->type, &t_io ) )
+            {
+                // push 0
+                emit->append( new Chuck_Instr_Reg_Push_Imm( 0 ) );
+                op = new Chuck_Instr_Branch_Eq_int_IO_good( 0 );
+                break;
+            }
+
             EM_error2( stmt->c2->stmt_exp->linepos,
-                 "(emit): internal error: unhandled type '%s' in for conditional",
-                 stmt->c2->stmt_exp->type->name.c_str() );
+                "(emit): internal error: unhandled type '%s' in for conditional",
+                stmt->c2->stmt_exp->type->name.c_str() );
             return FALSE;
         }
         // append the op
@@ -714,6 +732,15 @@ t_CKBOOL emit_engine_emit_while( Chuck_Emitter * emit, a_Stmt_While stmt )
         break;
         
     default:
+        // check for IO
+        if( isa( stmt->cond->type, &t_io ) )
+        {
+            // push 0
+            emit->append( new Chuck_Instr_Reg_Push_Imm( 0 ) );
+            op = new Chuck_Instr_Branch_Eq_int_IO_good( 0 );
+            break;
+        }
+
         EM_error2( stmt->cond->linepos,
             "(emit): internal error: unhandled type '%s' in while conditional",
             stmt->cond->type->name.c_str() );
@@ -806,9 +833,18 @@ t_CKBOOL emit_engine_emit_do_while( Chuck_Emitter * emit, a_Stmt_While stmt )
         break;
         
     default:
+        // check for IO
+        if( isa( stmt->cond->type, &t_io ) )
+        {
+            // push 0
+            emit->append( new Chuck_Instr_Reg_Push_Imm( 0 ) );
+            op = new Chuck_Instr_Branch_Eq_int_IO_good( 0 );
+            break;
+        }
+
         EM_error2( stmt->cond->linepos,
-                   "(emit): internal error: unhandled type '%s' in do/while conditional",
-                   stmt->cond->type->c_name() );
+            "(emit): internal error: unhandled type '%s' in do/while conditional",
+            stmt->cond->type->c_name() );
         return FALSE;
     }
     
@@ -886,9 +922,18 @@ t_CKBOOL emit_engine_emit_until( Chuck_Emitter * emit, a_Stmt_Until stmt )
         break;
         
     default:
+        // check for IO
+        if( isa( stmt->cond->type, &t_io ) )
+        {
+            // push 0
+            emit->append( new Chuck_Instr_Reg_Push_Imm( 0 ) );
+            op = new Chuck_Instr_Branch_Neq_int_IO_good( 0 );
+            break;
+        }
+
         EM_error2( stmt->cond->linepos,
-             "(emit): internal error: unhandled type '%s' in until conditional",
-             stmt->cond->type->name.c_str() );
+            "(emit): internal error: unhandled type '%s' in until conditional",
+            stmt->cond->type->name.c_str() );
         return FALSE;
     }
     
@@ -1992,7 +2037,25 @@ t_CKBOOL emit_engine_emit_op( Chuck_Emitter * emit, ae_Operator op, a_Exp lhs, a
 
         default:
             if( isa( t_left, &t_string ) && isa( t_right, &t_string ) )
+            {
                 emit->append( instr = new Chuck_Instr_Op_string( op ) );
+            }
+            else if( isa( t_left, &t_io ) )
+            {
+                // output
+                if( isa( t_right, &t_int ) )
+                {
+                    emit->append( instr = new Chuck_Instr_IO_out_int );
+                }
+                else if( isa( t_right, &t_float ) )
+                {
+                    emit->append( instr = new Chuck_Instr_IO_out_float );
+                }
+                else if( isa( t_right, &t_string ) )
+                {
+                    emit->append( instr = new Chuck_Instr_IO_out_string );
+                }
+            }
             break;
         }
         break;
@@ -2158,8 +2221,31 @@ t_CKBOOL emit_engine_emit_op_chuck( Chuck_Emitter * emit, a_Exp lhs, a_Exp rhs, 
 
         return TRUE;
     }
+    
+    // input
+    if( isa( left, &t_io ) )
+    {
+        if( isa( right, &t_int ) )
+        {
+            assert( rhs->s_meta == ae_meta_var );
+            emit->append( new Chuck_Instr_IO_in_int );
+	    return TRUE;
+        }
+        else if( isa( right, &t_float ) )
+        {
+            assert( rhs->s_meta == ae_meta_var );
+            emit->append( new Chuck_Instr_IO_in_float );
+	    return TRUE;
+        }
+        else if( isa( right, &t_string ) )
+        {
+            assert( rhs->s_meta == ae_meta_var );
+            emit->append( new Chuck_Instr_IO_in_string );
+	    return TRUE;
+        }
+    }
 
-    // func call
+// func call
     if( isa( right, &t_function ) )
     {
         assert( binary->ck_func != NULL );
@@ -2538,6 +2624,14 @@ t_CKBOOL emit_engine_emit_exp_primary( Chuck_Emitter * emit, a_Exp_Primary exp )
         else if( exp->var == insert_symbol( "blackhole" ) )
         {
             emit->append( new Chuck_Instr_Bunghole );
+        }
+        else if( exp->var == insert_symbol( "chout" ) )
+        {
+            emit->append( new Chuck_Instr_Chout );
+        }
+        else if( exp->var == insert_symbol( "cherr" ) )
+        {
+            emit->append( new Chuck_Instr_Cherr );
         }
         else if( emit->find_dur( S_name(exp->var), &dur ) )
         {

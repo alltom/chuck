@@ -384,7 +384,7 @@ CK_DLL_TICK( sinosc_tick )
             d->num = d->freq / d->srate;
             // bound it
             if( d->num >= 1.0 ) d->num -= floor( d->num );
-            else if( d->num <= 1.0 ) d->num += floor( d->num );
+            else if( d->num <= -1.0 ) d->num += floor( d->num );
         }
         // sync phase to input
         else if( d->sync == 1 )
@@ -402,7 +402,7 @@ CK_DLL_TICK( sinosc_tick )
             d->num = freq / d->srate;
             // bound it
             if( d->num >= 1.0 ) d->num -= floor( d->num );
-            else if( d->num <= 1.0 ) d->num += floor( d->num );
+            else if( d->num <= -1.0 ) d->num += floor( d->num );
         }
         // sync phase to now
         // else if( d->sync == 3 )
@@ -421,6 +421,7 @@ CK_DLL_TICK( sinosc_tick )
         d->phase += d->num;
         // keep the phase between 0 and 1
         if( d->phase > 1.0 ) d->phase -= 1.0;
+        else if( d->phase < 0.0 ) d->phase += 1.0;
     }
 
     return TRUE;
@@ -452,7 +453,7 @@ CK_DLL_TICK( triosc_tick )
             d->num = d->freq / d->srate;
             // bound it
             if( d->num >= 1.0 ) d->num -= floor( d->num );
-            else if( d->num <= 1.0 ) d->num += floor( d->num );
+            else if( d->num <= -1.0 ) d->num += floor( d->num );
         }
         // sync phase to input
         else if( d->sync == 1 )
@@ -470,7 +471,7 @@ CK_DLL_TICK( triosc_tick )
             d->num = freq / d->srate;
             // bound it
             if( d->num >= 1.0 ) d->num -= floor( d->num );
-            else if( d->num <= 1.0 ) d->num += floor( d->num );
+            else if( d->num <= -1.0 ) d->num += floor( d->num );
         }
         // sync to now
         // if( d->sync == 3 )
@@ -491,6 +492,7 @@ CK_DLL_TICK( triosc_tick )
         d->phase += d->num;
         // keep the phase between 0 and 1
         if( d->phase > 1.0 ) d->phase -= 1.0;
+        else if( d->phase < 0.0 ) d->phase += 1.0;
     }
 
     return TRUE;
@@ -523,7 +525,7 @@ CK_DLL_TICK( pulseosc_tick )
             d->num = d->freq / d->srate;
             // bound it
             if( d->num >= 1.0 ) d->num -= floor( d->num );
-            else if( d->num <= 1.0 ) d->num += floor( d->num );
+            else if( d->num <= -1.0 ) d->num += floor( d->num );
         }
         // sync phase to input
         else if( d->sync == 1 )
@@ -541,7 +543,7 @@ CK_DLL_TICK( pulseosc_tick )
             d->num = freq / d->srate;
             // bound it
             if( d->num >= 1.0 ) d->num -= floor( d->num );
-            else if( d->num <= 1.0 ) d->num += floor( d->num );
+            else if( d->num <= -1.0 ) d->num += floor( d->num );
         }
         // sync to now
         // if( d->sync == 3 )
@@ -560,6 +562,7 @@ CK_DLL_TICK( pulseosc_tick )
         d->phase += d->num;
         // keep the phase between 0 and 1
         if( d->phase > 1.0 ) d->phase -= 1.0;
+		else if( d->phase < 0.0 ) d->phase += 1.0;
     }
 
     return TRUE;

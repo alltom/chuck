@@ -47,6 +47,7 @@ static t_CKFLOAT g_floatMin = DBL_MIN;
 static t_CKFLOAT g_inf = 0.0;
 static t_CKINT g_intMax = LONG_MAX;
 static t_CKCOMPLEX g_i = { 0.0, 1.0 };
+static t_CKFLOAT fzero() { return 0.0; }
 
 
 // query
@@ -299,9 +300,8 @@ DLL_QUERY libmath_query( Chuck_DL_Query * QUERY )
     assert( sizeof(t_CKINT) == sizeof(long) );
     QUERY->add_svar( QUERY, "int", "INT_MAX", TRUE, &g_intMax );
 
-    // infinity
-    double zero = 0.0;
-    g_inf = 1.0 / zero;
+    // infinity, using function to avoid potential "smart" compiler warning
+    g_inf = 1.0 / fzero();
     QUERY->add_svar( QUERY, "float", "INFINITY", TRUE, &g_inf );
 
     // i

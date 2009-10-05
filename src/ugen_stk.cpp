@@ -4296,7 +4296,7 @@ void BandedWG :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): BandedWG: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): BandedWG: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_BowPressure_) { // 2
@@ -5096,7 +5096,7 @@ void BlowBotl :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): BlowBotl: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): BlowBotl: Control value exceeds nominal range!" << std::endl;
   }
 
   if( number == __SK_NoiseLevel_ ) { // 4
@@ -5379,7 +5379,7 @@ void BlowHole :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): BlowHole: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): BlowHole: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_ReedStiffness_) { // 2 
@@ -5650,7 +5650,7 @@ void Bowed :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Bowed: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Bowed: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_BowPressure_) { // 2
@@ -5853,7 +5853,7 @@ void Brass :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Brass: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Brass: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_LipTension_) { // 2
@@ -6168,7 +6168,7 @@ void Clarinet :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Clarinet: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Clarinet: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_ReedStiffness_) { // 2
@@ -7238,7 +7238,7 @@ void FM :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): FM: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): FM: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_Breath_) // 2
@@ -7420,7 +7420,7 @@ void FMVoices :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): FMVoices: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): FMVoices: Control value exceeds nominal range!" << std::endl;
   }
 
 
@@ -7901,7 +7901,7 @@ void Flute :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Flute: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Flute: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_JetDelay_) // 2
@@ -8576,7 +8576,7 @@ void Mandolin :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Mandolin: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Mandolin: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_BodySize_) // 2
@@ -8964,7 +8964,7 @@ void Mesh2D :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Mesh2D: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Mesh2D: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == 2) // 2
@@ -9386,7 +9386,7 @@ void ModalBar :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): ModalBar: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): ModalBar: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_StickHardness_) // 2
@@ -9633,7 +9633,7 @@ void Moog :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Moog: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Moog: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_FilterQ_) // 2
@@ -11178,7 +11178,7 @@ void Resonate :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Resonate: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Resonate: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == 2) // 2
@@ -11969,7 +11969,7 @@ void Saxofony :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Saxofony: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Saxofony: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_ReedStiffness_) { // 2
@@ -12924,7 +12924,7 @@ void Shakers :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Shakers: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Shakers: Control value exceeds nominal range!" << std::endl;
   }
 
   MY_FLOAT temp;
@@ -13257,7 +13257,7 @@ void Simple :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Clarinet: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Clarinet: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_Breath_) // 2
@@ -13842,7 +13842,7 @@ void StifKarp :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): StifKarp: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): StifKarp: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_PickPosition_) // 4
@@ -14744,7 +14744,7 @@ void VoicForm :: controlChange(int number, MY_FLOAT value)
     }
     else if ( norm > 1.0 ) {
         norm = 1.0;
-        std::cerr << "[chuck](via STK): VoicForm: Control value greater than 128.0!" << std::endl;
+        std::cerr << "[chuck](via STK): VoicForm: Control value exceeds nominal range!" << std::endl;
     }
 
     if (number == __SK_Breath_) { // 2
@@ -15448,7 +15448,7 @@ void Whistle :: controlChange(int number, MY_FLOAT value)
   }
   else if ( norm > 1.0 ) {
     norm = 1.0;
-    std::cerr << "[chuck](via STK): Whistle: Control value greater than 128.0!" << std::endl;
+    std::cerr << "[chuck](via STK): Whistle: Control value exceeds nominal range!" << std::endl;
   }
 
   if (number == __SK_NoiseLevel_) // 4

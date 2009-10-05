@@ -41,6 +41,7 @@
 #include "chuck_bbq.h"
 #include "chuck_dl.h"
 #include "chuck_errmsg.h"
+#include "chuck_globals.h"
 
 #include "util_string.h"
 
@@ -2050,6 +2051,54 @@ void Chuck_Instr_Branch_Neq_double::execute( Chuck_VM * vm, Chuck_VM_Shred * shr
 // name: execute()
 // desc: ...
 //-----------------------------------------------------------------------------
+void Chuck_Instr_Branch_Eq_int_IO_good::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
+{
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+    Chuck_IO **& ppIO = (Chuck_IO **&)shred->reg->sp;
+    t_CKINT result = 0;
+    pop_( sp, 2 );
+
+    if( (*ppIO) != NULL )
+    {
+        // TODO: verify this logic
+        result = (*ppIO)->good() && !(*ppIO)->eof();
+    }
+
+    if( result == val_(sp+1) || !(*ppIO) )
+        shred->next_pc = m_jmp;
+}
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: execute()
+// desc: ...
+//-----------------------------------------------------------------------------
+void Chuck_Instr_Branch_Neq_int_IO_good::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
+{
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+    Chuck_IO **& ppIO = (Chuck_IO **&)shred->reg->sp;
+    t_CKINT result = 0;
+    pop_( sp, 2 );
+
+    if( (*ppIO) != NULL )
+    {
+        // TODO: verify this logic
+        t_CKINT result = (*ppIO)->good() && !(*ppIO)->eof();
+    }
+
+    if( result != val_(sp+1) || !(ppIO) )
+        shred->next_pc = m_jmp;
+}
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: execute()
+// desc: ...
+//-----------------------------------------------------------------------------
 void Chuck_Instr_Binary_And::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
     t_CKUINT *& sp = (t_CKUINT *&)shred->reg->sp;
@@ -2707,6 +2756,8 @@ Chuck_Object * instantiate_and_initialize_object( Chuck_Type * type, Chuck_VM_Sh
 {
     Chuck_Object * object = NULL;
     Chuck_UAna * uana = NULL;
+    // TODO: this is a hack!
+    Chuck_VM * vm_ref = shred ? shred->vm_ref : g_vm;
 
     // sanity
     assert( type != NULL );
@@ -2720,6 +2771,8 @@ Chuck_Object * instantiate_and_initialize_object( Chuck_Type * type, Chuck_VM_Sh
         else if( isa( type, &t_string ) ) object = new Chuck_String;
         // TODO: is this ok?
         else if( isa( type, &t_shred ) ) object = new Chuck_VM_Shred;
+        // TODO: is this ok?
+        else if( isa( type, &t_fileio ) ) object = new Chuck_IO_File;
         else object = new Chuck_Object;
     }
     else
@@ -2731,10 +2784,12 @@ Chuck_Object * instantiate_and_initialize_object( Chuck_Type * type, Chuck_VM_Sh
         {
             // uana
             object = ugen = uana = new Chuck_UAna;
+            ugen->alloc_v( vm_ref->shreduler()->m_max_block_size );
         }
         else 
         {
             object = ugen = new Chuck_UGen;
+            ugen->alloc_v( vm_ref->shreduler()->m_max_block_size );
         }
 
         if( shred )
@@ -4338,7 +4393,7 @@ void Chuck_Instr_Array_Append::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
     // reg stack pointer
     t_CKUINT *& sp = (t_CKUINT *&)shred->reg->sp;
-    t_CKINT i = 0;
+    // t_CKINT i = 0;
     t_CKUINT val = 0;
     t_CKFLOAT fval = 0;
     t_CKCOMPLEX cval;
@@ -4596,7 +4651,7 @@ void Chuck_Instr_Dot_Cmp_First::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
         pop_( sp, 1 );
         // push the addr on
         if( m_emit_addr ) {
-            t_CKFLOAT a = (*(t_CKCOMPLEX **)sp)->re;
+            // t_CKFLOAT a = (*(t_CKCOMPLEX **)sp)->re;
             push_( sp, (t_CKUINT)(&((*(t_CKCOMPLEX **)sp)->re)) );
         } else {
             push_float( sp, (*(t_CKCOMPLEX **)sp)->re );
@@ -4932,6 +4987,32 @@ void Chuck_Instr_Bunghole::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 
 
 //-----------------------------------------------------------------------------
+// name: execute()
+// desc: ...
+//-----------------------------------------------------------------------------
+void Chuck_Instr_Chout::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
+{
+    t_CKUINT *& reg_sp = (t_CKUINT *&)shred->reg->sp;
+    push_( reg_sp, (t_CKUINT)Chuck_IO_Chout::getInstance() );
+}
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: execute()
+// desc: ...
+//-----------------------------------------------------------------------------
+void Chuck_Instr_Cherr::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
+{
+    t_CKUINT *& reg_sp = (t_CKUINT *&)shred->reg->sp;
+    push_( reg_sp, (t_CKUINT)Chuck_IO_Cherr::getInstance() );
+}
+
+
+
+
+//-----------------------------------------------------------------------------
 // name: Chuck_Instr_UGen_Link()
 // desc: ...
 //-----------------------------------------------------------------------------
@@ -5127,6 +5208,37 @@ void Chuck_Instr_Init_Loop_Counter::execute( Chuck_VM * vm, Chuck_VM_Shred * shr
 //-----------------------------------------------------------------------------
 void Chuck_Instr_IO_in_int::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+    
+    // pop the value
+    pop_( sp, 2 );
+    
+    // issue: 64-bit
+    // the IO
+    Chuck_IO **& ppIO = (Chuck_IO **&)sp;
+
+    // check it
+    if( *(ppIO) == NULL ) goto null_pointer;
+    
+    // read into the variable
+    **(t_CKINT **)(sp+1) = (*ppIO)->readInt( Chuck_IO::READ_INT32 );
+    
+    // push the IO
+    push_( sp, (t_CKINT)(*(ppIO)) );
+    
+    return;
+
+null_pointer:
+    // we have a problem
+    fprintf( stderr, 
+        "[chuck](VM): NullPointerException: (IO input int) in shred[id=%d:%s], PC=[%d]\n",
+        shred->xid, shred->name.c_str(), shred->pc );
+    goto done;
+
+done:
+    // do something!
+    shred->is_running = FALSE;
+    shred->is_done = TRUE;
 }
 
 
@@ -5138,6 +5250,37 @@ void Chuck_Instr_IO_in_int::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 //-----------------------------------------------------------------------------
 void Chuck_Instr_IO_in_float::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+    
+    // issue: 64-bit
+    // pop the value
+    pop_( sp, 3 );
+    
+    // the IO
+    Chuck_IO **& ppIO = (Chuck_IO **&)sp;
+    
+    // check it
+    if( *(ppIO) == NULL ) goto null_pointer;
+    
+    // read into the variable
+    **(t_CKFLOAT **)(sp+1) = (*ppIO)->readFloat();
+    
+    // push the IO
+    push_( sp, (t_CKINT)(*(ppIO)) );
+    
+    return;
+
+null_pointer:
+    // we have a problem
+    fprintf( stderr, 
+        "[chuck](VM): NullPointerException: (IO input float) in shred[id=%d:%s], PC=[%d]\n",
+        shred->xid, shred->name.c_str(), shred->pc );
+    goto done;
+
+done:
+    // do something!
+    shred->is_running = FALSE;
+    shred->is_done = TRUE;
 }
 
 
@@ -5149,6 +5292,39 @@ void Chuck_Instr_IO_in_float::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 //-----------------------------------------------------------------------------
 void Chuck_Instr_IO_in_string::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+    
+    // pop the value
+    pop_( sp, 2 );
+    
+    // issue: 64-bit
+    // the IO
+    Chuck_IO ** ppIO = (Chuck_IO **)sp;
+    // the string
+    Chuck_String *** ppStr = (Chuck_String ***)(sp+1);
+    
+    // check it
+    if( *(ppIO) == NULL || **(ppStr) == NULL ) goto null_pointer;
+    
+    // read into the variable
+    (*ppIO)->readString( (**ppStr)->str );
+    
+    // push the IO
+    push_( sp, (t_CKINT)(*(ppIO)) );
+    
+    return;
+    
+null_pointer:
+    // we have a problem
+    fprintf( stderr, 
+            "[chuck](VM): NullPointerException: (IO input string) in shred[id=%d:%s], PC=[%d]\n",
+            shred->xid, shred->name.c_str(), shred->pc );
+    goto done;
+    
+done:
+    // do something!
+    shred->is_running = FALSE;
+    shred->is_done = TRUE;
 }
 
 
@@ -5160,6 +5336,37 @@ void Chuck_Instr_IO_in_string::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 //-----------------------------------------------------------------------------
 void Chuck_Instr_IO_out_int::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+        
+    // pop the value
+    pop_( sp, 2 );
+        
+    // issue: 64-bit
+    // the IO
+    Chuck_IO **& ppIO = (Chuck_IO **&)sp;
+        
+    // check it
+    if( *(ppIO) == NULL ) goto null_pointer;
+        
+    // write the value
+    (*ppIO)->write( *(sp+1) );
+        
+    // push the IO
+    push_( sp, (t_CKINT)(*(ppIO)) );
+        
+    return;
+
+null_pointer:
+    // we have a problem
+    fprintf( stderr, 
+        "[chuck](VM): NullPointerException: (IO output int) in shred[id=%d:%s], PC=[%d]\n",
+        shred->xid, shred->name.c_str(), shred->pc );
+    goto done;
+        
+done:
+    // do something!
+    shred->is_running = FALSE;
+    shred->is_done = TRUE;
 }
 
 
@@ -5171,6 +5378,37 @@ void Chuck_Instr_IO_out_int::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 //-----------------------------------------------------------------------------
 void Chuck_Instr_IO_out_float::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+    
+    // pop the value
+    pop_( sp, 3 );
+    
+    // issue: 64-bit
+    // the IO
+    Chuck_IO **& ppIO = (Chuck_IO **&)sp;
+    
+    // check it
+    if( *(ppIO) == NULL ) goto null_pointer;
+    
+    // write the value
+    (*ppIO)->write( *((t_CKFLOAT *)(sp+1)) );
+    
+    // push the IO
+    push_( sp, (t_CKINT)(*(ppIO)) );
+    
+    return;
+    
+null_pointer:
+    // we have a problem
+    fprintf( stderr, 
+            "[chuck](VM): NullPointerException: (IO output float) in shred[id=%d:%s], PC=[%d]\n",
+            shred->xid, shred->name.c_str(), shred->pc );
+    goto done;
+    
+done:
+    // do something!
+    shred->is_running = FALSE;
+    shred->is_done = TRUE;
 }
 
 
@@ -5182,6 +5420,39 @@ void Chuck_Instr_IO_out_float::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 //-----------------------------------------------------------------------------
 void Chuck_Instr_IO_out_string::execute( Chuck_VM * vm, Chuck_VM_Shred * shred )
 {
+    t_CKINT *& sp = (t_CKINT *&)shred->reg->sp;
+    
+    // pop the value
+    pop_( sp, 2 );
+    
+    // issue: 64-bit
+    // the IO
+    Chuck_IO ** ppIO = (Chuck_IO **)sp;
+    // the string
+    Chuck_String ** ppStr = (Chuck_String **)(sp+1);
+    
+    // check it
+    if( *(ppIO) == NULL || *(ppStr) == NULL ) goto null_pointer;
+    
+    // write the variable
+    (*ppIO)->write( (*ppStr)->str.c_str() );
+    
+    // push the IO
+    push_( sp, (t_CKINT)(*(ppIO)) );
+    
+    return;
+    
+null_pointer:
+    // we have a problem
+    fprintf( stderr, 
+            "[chuck](VM): NullPointerException: (IO output string) in shred[id=%d:%s], PC=[%d]\n",
+            shred->xid, shred->name.c_str(), shred->pc );
+    goto done;
+    
+done:
+    // do something!
+    shred->is_running = FALSE;
+    shred->is_done = TRUE;
 }
 
 

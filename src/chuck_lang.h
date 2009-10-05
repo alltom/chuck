@@ -29,6 +29,7 @@
 // authors: Ge Wang (gewang@cs.princeton.edu)
 //          Perry R. Cook (prc@cs.princeton.edu)
 //          Ananya Misra (amisra@cs.princeton.edu)
+//          Andrew Schran (aschran@princeton.edu)
 //    date: spring 2005
 //-----------------------------------------------------------------------------
 #ifndef __CHUCK_LANG_H__
@@ -196,6 +197,7 @@ CK_DLL_MFUN( event_can_wait );
 // io API
 //-----------------------------------------------------------------------------
 CK_DLL_MFUN( io_dummy );
+CK_DLL_SFUN( io_newline );
 CK_DLL_SFUN( io_openfile );
 
 
@@ -205,20 +207,27 @@ CK_DLL_SFUN( io_openfile );
 CK_DLL_CTOR( fileio_ctor );
 CK_DLL_DTOR( fileio_dtor );
 CK_DLL_MFUN( fileio_open );
-CK_DLL_MFUN( fileio_more );
-CK_DLL_MFUN( fileio_eof );
-CK_DLL_MFUN( fileio_good2read );
-CK_DLL_MFUN( fileio_good2write );
+CK_DLL_MFUN( fileio_openflags );
 CK_DLL_MFUN( fileio_good );
 CK_DLL_MFUN( fileio_close );
-CK_DLL_MFUN( fileio_readint );
-CK_DLL_MFUN( fileio_readfloat );
-CK_DLL_MFUN( fileio_readstring );
+CK_DLL_MFUN( fileio_flush );
+CK_DLL_MFUN( fileio_getmode );
+CK_DLL_MFUN( fileio_setmode );
+CK_DLL_MFUN( fileio_size );
+CK_DLL_MFUN( fileio_seek );
+CK_DLL_MFUN( fileio_tell );
+CK_DLL_MFUN( fileio_isdir );
+CK_DLL_MFUN( fileio_dirlist );
+CK_DLL_MFUN( fileio_read );
 CK_DLL_MFUN( fileio_readline );
+CK_DLL_MFUN( fileio_readint );
+CK_DLL_MFUN( fileio_readintflags );
+CK_DLL_MFUN( fileio_readfloat );
+CK_DLL_MFUN( fileio_eof );
+CK_DLL_MFUN( fileio_more );
+CK_DLL_MFUN( fileio_writestring );
 CK_DLL_MFUN( fileio_writeint );
 CK_DLL_MFUN( fileio_writefloat );
-CK_DLL_MFUN( fileio_writestring );
-CK_DLL_MFUN( fileio_writeline );
 
 
 //-----------------------------------------------------------------------------
@@ -334,6 +343,7 @@ CK_DLL_MFUN( HidMsg_is_wheel_motion );
 CK_DLL_CTOR( HidIn_ctor );
 CK_DLL_DTOR( HidIn_dtor );
 CK_DLL_MFUN( HidIn_open );
+CK_DLL_MFUN( HidIn_open_named );
 CK_DLL_MFUN( HidIn_open_joystick );
 CK_DLL_MFUN( HidIn_open_mouse );
 CK_DLL_MFUN( HidIn_open_keyboard );

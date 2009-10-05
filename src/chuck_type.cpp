@@ -67,6 +67,8 @@ Chuck_Type t_uanablob( te_uanablob, "UAnaBlob", &t_object, sizeof(void *) );
 Chuck_Type t_shred( te_shred, "Shred", &t_object, sizeof(void *) );
 Chuck_Type t_io( te_io, "IO", &t_object, sizeof(void *) );
 Chuck_Type t_fileio( te_fileio, "FileIO", &t_io, sizeof(void *) );
+Chuck_Type t_chout( te_chout, "StdOut", &t_io, sizeof(void *) );
+Chuck_Type t_cherr( te_cherr, "StdErr", &t_io, sizeof(void *) );
 Chuck_Type t_thread( te_thread, "Thread", &t_object, sizeof(void *) );
 Chuck_Type t_class( te_class, "Class", &t_object, sizeof(void *) );
 
@@ -225,6 +227,8 @@ Chuck_Env * type_engine_init( Chuck_VM * vm )
     env->global()->type.add( t_event.name, &t_event );        t_event.lock();
     env->global()->type.add( t_io.name, &t_io );              t_io.lock();
     env->global()->type.add( t_fileio.name, &t_fileio );      t_fileio.lock();
+    env->global()->type.add( t_chout.name, &t_chout );        t_chout.lock();
+    env->global()->type.add( t_cherr.name, &t_cherr );        t_cherr.lock();
 
     // dur value
     t_CKDUR samp = 1.0;
@@ -249,6 +253,7 @@ Chuck_Env * type_engine_init( Chuck_VM * vm )
     init_class_shred( env, &t_shred );
     init_class_event( env, &t_event );
     init_class_io( env, &t_io );
+    init_class_fileio( env, &t_fileio );
 
     EM_log( CK_LOG_SEVERE, "class 'class'" );
     t_class.info = new Chuck_Namespace;
@@ -276,6 +281,8 @@ Chuck_Env * type_engine_init( Chuck_VM * vm )
     env->global()->value.add( "maybe", new Chuck_Value( &t_int, "maybe", new t_CKFLOAT(.5), FALSE ) );
     env->global()->value.add( "pi", new Chuck_Value( &t_float, "pi", new t_CKFLOAT(ONE_PI), TRUE ) );
     env->global()->value.add( "global", new Chuck_Value( &t_class, "global", env->global(), TRUE ) );
+    env->global()->value.add( "chout", new Chuck_Value( &t_io, "chout", Chuck_IO_Chout::getInstance(), TRUE ) );
+    env->global()->value.add( "cherr", new Chuck_Value( &t_io, "cherr", Chuck_IO_Cherr::getInstance(), TRUE ) );
 
     // TODO: can't use the following now is local to shred
     // env->global()->value.add( "now", new Chuck_Value( &t_time, "now", &(vm->shreduler()->now_system), TRUE ) );
@@ -339,6 +346,8 @@ Chuck_Env * type_engine_init( Chuck_VM * vm )
     env->key_values["dac"] = TRUE;
     env->key_values["blackhole"] = TRUE;
     env->key_values["global"] = TRUE;
+    env->key_values["chout"] = TRUE;
+    env->key_values["cherr"] = TRUE;
     env->key_values["null"] = TRUE;
     env->key_values["NULL"] = TRUE;
 
@@ -356,6 +365,9 @@ Chuck_Env * type_engine_init( Chuck_VM * vm )
     // env->key_types["machine"] = TRUE;
     // env->key_types["language"] = TRUE;
     // env->key_types["compiler"] = TRUE;
+    
+    // ge and spencer reserve this one
+    env->key_values["newlineEx2VistaHWNDVisualFoxProA"] = TRUE;
 
     // commit the global namespace
     env->global()->commit();
@@ -392,6 +404,7 @@ void type_engine_shutdown( Chuck_Env * env )
     SAFE_RELEASE( t_class.info );
     SAFE_RELEASE( t_thread.info );
     SAFE_RELEASE( t_io.info );
+    SAFE_RELEASE( t_fileio.info );
 }
 
 
@@ -804,7 +817,24 @@ t_CKBOOL type_engine_check_if( Chuck_Env * env, a_Stmt_If stmt )
     if( !type_engine_check_exp( env, stmt->cond ) )
         return FALSE;
         
-    // TODO: ensure that conditional has valid type
+    // ensure that conditional has valid type
+    switch( stmt->cond->type->xid )
+    {
+    case te_int:
+    case te_float:
+    case te_dur:
+    case te_time:
+        break;
+        
+    default:
+        // check for IO
+        if( isa( stmt->cond->type, &t_io ) ) break;
+
+        // error
+        EM_error2( stmt->cond->linepos,
+            "invalid type '%s' in if condition", stmt->cond->type->name.c_str() );
+        return FALSE;
+    }
 
     // check if
     if( !type_engine_check_stmt( env, stmt->if_body ) )
@@ -835,7 +865,24 @@ t_CKBOOL type_engine_check_for( Chuck_Env * env, a_Stmt_For stmt )
     if( !type_engine_check_stmt( env, stmt->c2 ) )
         return FALSE;
 
-    // TODO: same as if - check conditional type valid
+    // ensure that conditional has valid type
+    switch( stmt->c2->stmt_exp->type->xid )
+    {
+    case te_int:
+    case te_float:
+    case te_dur:
+    case te_time:
+        break;
+        
+    default:
+        // check for IO
+        if( isa( stmt->c2->stmt_exp->type, &t_io ) ) break;
+
+        // error
+        EM_error2( stmt->c2->stmt_exp->linepos,
+            "invalid type '%s' in for condition", stmt->c2->stmt_exp->type->name.c_str() );
+        return FALSE;
+    }
 
     // check the post
     if( stmt->c3 && !type_engine_check_exp( env, stmt->c3 ) )
@@ -869,7 +916,24 @@ t_CKBOOL type_engine_check_while( Chuck_Env * env, a_Stmt_While stmt )
     if( !type_engine_check_exp( env, stmt->cond ) )
         return FALSE;
         
-    // TODO: same as if - ensure the type in conditional is valid
+    // ensure that conditional has valid type
+    switch( stmt->cond->type->xid )
+    {
+    case te_int:
+    case te_float:
+    case te_dur:
+    case te_time:
+        break;
+        
+    default:
+        // check for IO
+        if( isa( stmt->cond->type, &t_io ) ) break;
+
+        // error
+        EM_error2( stmt->cond->linepos,
+            "invalid type '%s' in while condition", stmt->cond->type->name.c_str() );
+        return FALSE;
+    }
 
     // for break and continue statement
     env->breaks.push_back( stmt->self );
@@ -898,7 +962,24 @@ t_CKBOOL type_engine_check_until( Chuck_Env * env, a_Stmt_Until stmt )
     if( !type_engine_check_exp( env, stmt->cond ) )
         return FALSE;
         
-    // TODO: same as if - ensure the type in conditional is valid
+    // ensure that conditional has valid type
+    switch( stmt->cond->type->xid )
+    {
+    case te_int:
+    case te_float:
+    case te_dur:
+    case te_time:
+        break;
+        
+    default:
+        // check for IO
+        if( isa( stmt->cond->type, &t_io ) ) break;
+
+        // error
+        EM_error2( stmt->cond->linepos,
+            "invalid type '%s' in until condition", stmt->cond->type->name.c_str() );
+        return FALSE;
+    }
 
     // for break and continue statement
     env->breaks.push_back( stmt->self );
@@ -1252,6 +1333,7 @@ t_CKTYPE type_engine_check_op( Chuck_Env * env, ae_Operator op, a_Exp lhs, a_Exp
     }
 
     // file I/O
+    /*
     if( op == ae_op_arrow_left || op == ae_op_arrow_right )
     {
         // check left
@@ -1272,7 +1354,8 @@ t_CKTYPE type_engine_check_op( Chuck_Env * env, ae_Operator op, a_Exp lhs, a_Exp
                 return left;
         }
     }
-
+    */
+    
     // implicit cast
     if( *left != *right )
     {
@@ -1549,6 +1632,19 @@ t_CKTYPE type_engine_check_op( Chuck_Env * env, ae_Operator op, a_Exp lhs, a_Exp
     case ae_op_lt:
     case ae_op_gt:
     case ae_op_le:
+        // file output
+        if( isa( left, &t_io ) )
+        {
+            if( isa( right, &t_int ) ) return left;
+            else if( isa( right, &t_float ) ) return left;
+            else if( isa( right, &t_string ) ) return left;
+            else // error
+            {
+                EM_error2( lhs->linepos, "on suitable IO action for '%s' <= '%s'...",
+                    left->c_name(), right->c_name() );
+                return NULL;
+            }
+        }
     case ae_op_ge:
     case ae_op_neq:
         LR( te_int, te_int ) return &t_int;
@@ -1680,6 +1776,28 @@ t_CKTYPE type_engine_check_op_chuck( Chuck_Env * env, a_Exp lhs, a_Exp rhs,
         return right;
     }
     
+    // input ( IO => int ), (IO => float)
+    if( isa( left, &t_io ) )
+    {
+        // right hand side
+        if( rhs->s_meta != ae_meta_var )
+        {
+            // error
+            EM_error2( rhs->linepos,
+                "cannot perform I/O assignment via '=>' to non-mutable value" );
+            return NULL;
+        }
+
+        // check right
+        if( isa( right, &t_int ) || isa( right, &t_float ) ||
+            isa( right, &t_string ) )
+        {
+            // emit ref
+            rhs->emit_var = TRUE;
+            return left;
+        }
+    }
+
     // object.toString
 
     // implicit cast
@@ -2839,15 +2957,17 @@ string type_engine_print_exp_dot_member( Chuck_Env * env, a_Exp_Dot_Member membe
 
 
 //-----------------------------------------------------------------------------
-// name: find_func_match()
+// name: find_func_match_actual()
 // desc: ...
 //-----------------------------------------------------------------------------
-Chuck_Func * find_func_match( Chuck_Func * up, a_Exp args, t_CKBOOL implicit )
+Chuck_Func * find_func_match_actual( Chuck_Func * up, a_Exp args, 
+                                     t_CKBOOL implicit, t_CKBOOL specific )
 {
     a_Exp e;
     a_Arg_List e1;
     t_CKUINT count;
     Chuck_Func * func;
+    t_CKBOOL match = FALSE;
 
     // see if args is nil
     if( args && args->type == &t_void )
@@ -2870,8 +2990,11 @@ Chuck_Func * find_func_match( Chuck_Func * up, a_Exp args, t_CKBOOL implicit )
                 // check for extra arguments
                 if( e1 == NULL ) goto moveon;
 
+                // get match
+                match = specific ? e->type == e1->type : isa( e->type, e1->type );
+
                 // no match
-                if( !isa( e->type, e1->type ) )
+                if( !match )
                 {
                     // TODO: fix this for overload implicit cast (multiple matches)
                     if( implicit && *e->type == t_int && *e1->type == t_float )
@@ -2901,6 +3024,36 @@ moveon:
     }
 
     // not found
+    return NULL;
+}
+
+
+
+
+//-----------------------------------------------------------------------------
+// name: find_func_match()
+// desc: ...
+//-----------------------------------------------------------------------------
+Chuck_Func * find_func_match( Chuck_Func * up, a_Exp args )
+{
+    Chuck_Func * func = NULL;
+
+    // try to find specific
+    func = find_func_match_actual( up, args, FALSE, TRUE );
+    if( func ) return func;
+
+    // try to find specific with implicit
+    func = find_func_match_actual( up, args, TRUE, TRUE );
+    if( func ) return func;
+
+    // try to find non-specific
+    func = find_func_match_actual( up, args, FALSE, FALSE );
+    if( func ) return func;
+
+    // try to find non-specific with implicit
+    func = find_func_match_actual( up, args, TRUE, FALSE );
+    if( func ) return func;
+
     return NULL;
 }
 
@@ -2943,9 +3096,7 @@ t_CKTYPE type_engine_check_exp_func_call( Chuck_Env * env, a_Exp exp_func, a_Exp
     }
 
     // look for a match
-    func = find_func_match( up, args, FALSE );
-    // look for a match (with implicit cast)
-    if( !func ) func = find_func_match( up, args, TRUE );
+    func = find_func_match( up, args );
 
     // no func
     if( !func )
@@ -4606,7 +4757,7 @@ Chuck_Type * type_engine_import_ugen_begin( Chuck_Env * env, const char * name,
 
     // construct class
     if( !(type = type_engine_import_class_begin( env, name, parent, where, pre_ctor, dtor ) ) )
-        return FALSE;
+        return NULL;
 
     // make sure parent is ugen
     assert( type->parent != NULL );
@@ -4616,7 +4767,7 @@ Chuck_Type * type_engine_import_ugen_begin( Chuck_Env * env, const char * name,
         EM_error2( 0,
             "imported class '%s' does not have a ugen as parent",
             type->c_name() );
-        return FALSE;
+        return NULL;
     }
 
     // do the ugen part
@@ -4656,7 +4807,7 @@ Chuck_Type * type_engine_import_uana_begin( Chuck_Env * env, const char * name,
     // construct class
     if( !(type = type_engine_import_ugen_begin( env, name, parent, where, pre_ctor, dtor,
                                                 tick, pmsg, num_ins, num_outs ) ) )
-        return FALSE;
+        return NULL;
 
     // make sure parent is ugen
     assert( type->parent != NULL );
@@ -4666,7 +4817,7 @@ Chuck_Type * type_engine_import_uana_begin( Chuck_Env * env, const char * name,
         EM_error2( 0,
             "imported class '%s' does not have a uana as parent",
             type->c_name() );
-        return FALSE;
+        return NULL;
     }
 
     // do the info
